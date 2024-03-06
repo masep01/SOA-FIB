@@ -97,7 +97,7 @@ ENTRY (clock_handler)
       EOI
       call clock_routine
       RESTORE_ALL
-      iret;
+      iret
 
 ENTRY (keyboard_handler)
       SAVE_ALL
