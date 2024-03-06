@@ -12,6 +12,8 @@
 Gate idt[IDT_ENTRIES];
 Register    idtR;
 
+int zeos_ticks = 0;
+
 char char_map[] =
 {
   '\0','\0','1','2','3','4','5','6',
@@ -97,6 +99,7 @@ void syscall_handler_sysenter();
 
 /* Service routines */
 void clock_routine(){
+  zeos_ticks++;
   zeos_show_clock();
 }
 

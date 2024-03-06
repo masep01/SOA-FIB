@@ -15,6 +15,14 @@ int __attribute__ ((__section__(".text.main")))
     //*p = 'x';
 
     write(1, "\nHola\n", strlen("\nHola\n"));
+    while(1){
+      int n = gettime();
+      char * buffer[16];
+      itoa(n, buffer);
+      write(1, "SON LAS: ", strlen("SON LAS: "));
+      write(1, buffer, strlen(buffer));
+      write(1, "\n", 1);
+    }
     perror();
     
   while(1) { }
