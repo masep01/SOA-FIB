@@ -40,7 +40,7 @@ LIBZEOS = -L . -l zeos
 #add to USROBJ any object files required to complete the user program
 USROBJ = \
 	libc.o \
-	wrappers.o \
+	wrappers.o
 
 all:zeos.bin
 

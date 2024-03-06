@@ -14,7 +14,8 @@ int __attribute__ ((__section__(".text.main")))
     //char* p = 0;
     //*p = 'x';
 
-    write(1, "hola", strlen("hola"));
+    write(1, "\nHola\n", strlen("\nHola\n"));
+    perror();
     
   while(1) { }
 }

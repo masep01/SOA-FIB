@@ -4,17 +4,18 @@ ENTRY(write)
     # Save base pointer
     pushl %ebp
     mov %esp, %ebp
+
     pushl %ebx
     pushl %ecx
     pushl %edx
 
     # Parameter passing (reverse order)
-    mov 8(%ebp),  %ebx          # int size      (3)
-    mov 12(%ebp), %ecx          # char *buffer  (2)
-    mov 16(%ebp), %edx          # int fd        (1)
+    movl 8(%ebp),  %edx          # int size      (3)
+    movl 12(%ebp), %ecx          # char *buffer  (2)
+    movl 16(%ebp), %ebx          # int fd        (1)
     
     # Put syscall ID in EAX
-    mov $4, %eax
+    movl $4, %eax
 
     # Store ECX and EDX in user stack
     pushl %ecx
@@ -25,7 +26,7 @@ ENTRY(write)
     
     # Fake dynamic link
     pushl %ebp
-    mov %esp, %ebp
+    movl %esp, %ebp
 
     # Enter the system
     sysenter
@@ -46,13 +47,13 @@ write_error:
     # Obtain positive errno
     negl %eax
     movl %eax, errno
-    movl -1, %eax
+    movl $-1, %eax
 
 return:
     popl %edx
     popl %ecx
     popl %ebx
     
-    mov %esp, %ebp
+    movl %esp, %ebp
     popl %ebp
 	ret
