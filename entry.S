@@ -106,9 +106,8 @@ ENTRY (keyboard_handler)
       iret
 
 ENTRY (my_page_fault_handler)
-      SAVE_ALL
+      # No SAVE_ALL, since we do not return to user mode.
       call my_page_fault_routine
-      RESTORE_ALL
       iret
 
 ENTRY (writeMSR)
