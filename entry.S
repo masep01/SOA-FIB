@@ -4,6 +4,7 @@
 
 #include <asm.h>
 #include <segment.h>
+#include <errno.h>
 
 
 /**************************************************/
@@ -126,4 +127,5 @@ ENTRY (writeMSR)
       wrmsr
 
       popl %ebp
+      
       ret

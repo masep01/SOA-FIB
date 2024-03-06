@@ -107,7 +107,7 @@ void keyboard_routine(){
   if(its_make){
     char c = char_map[reg & 0x7f];       // Extract the pressed character. Mask = 0111 1111 = 0x7F
     if(c <= 32 || 127 <= c) c = 'C';     // If key does not match any ASCII character, print 'C'
-    printc_xy(0,0,c);
+    printc_xy(75,20,c);
   }
 }
 

@@ -15,7 +15,18 @@ void perror(void){
     case EFAULT:
       write(1, "Bad address.\n", strlen("Bad address.\n"));
       break;
-    
+    case EINVAL:
+      write(1, "Invalid argument\n", strlen("Invalid argument\n"));
+      break;
+    case EBADF:
+      write(1, "Bad file number\n", strlen("Bad file number\n"));
+      break;
+    case EACCES:
+      write(1, "Permissionn denied\n", strlen("Permissionn denied\n"));
+      break;
+    case ENOSYS:
+      write(1, "Function not implemented\n", strlen("Function not implemented\n"));
+      break;
     default:
       break;
   }
