@@ -9,10 +9,10 @@ ENTRY(write)
     pushl %ecx
     pushl %edx
 
-    # Parameter passing (reverse order)
-    movl 8(%ebp),  %edx          # int size      (3)
+    # Parameter passing
+    movl 8(%ebp),  %edx          # int fd        (1)
     movl 12(%ebp), %ecx          # char *buffer  (2)
-    movl 16(%ebp), %ebx          # int fd        (1)
+    movl 16(%ebp), %ebx          # int size      (3) 
     
     # Put syscall ID in EAX
     movl $4, %eax
