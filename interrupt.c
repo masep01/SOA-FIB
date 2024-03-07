@@ -103,6 +103,9 @@ void clock_routine(){
   zeos_show_clock();
 }
 
+/* Others */
+writeMSR(unsigned long msr, unsigned long addr);
+
 void keyboard_routine(){
   unsigned char reg = inb(0x60);         // Read 0x60 data register
   int its_make = reg & 0x80;             // Distinguish a make from a break (press or release)
