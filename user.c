@@ -51,7 +51,7 @@ int __attribute__ ((__section__(".text.main")))
 
     /* Testing Syscall: Write */
     test_write();
-     
+
     /* Testing Syscall: getTime() */
     test_gettime();
 

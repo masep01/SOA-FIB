@@ -23,14 +23,14 @@ char my_buffer[512];
 
 int check_fd(int fd, int permissions)
 {
-  if (fd!=1) return -9; /*EBADF*/
-  if (permissions!=ESCRIPTURA) return -13; /*EACCES*/
+  if (fd!=1) return -EBADF; /*EBADF*/
+  if (permissions!=ESCRIPTURA) return -EACCES; /*EACCES*/
   return 0;
 }
 
 int sys_ni_syscall()
 {
-	return -38; /*ENOSYS*/
+	return -ENOSYS; /*ENOSYS*/
 }
 
 int sys_getpid()
