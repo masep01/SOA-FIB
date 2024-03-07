@@ -67,6 +67,7 @@ int sys_write(int fd, char * buffer, int size)
   if(c_fd < 0) return c_fd;
   
   if(buffer == NULL) return -EFAULT;
+  if(!access_ok(VERIFY_READ, buffer, size)) return -EFAULT;
 
   if(size < 0) return -EINVAL;
 

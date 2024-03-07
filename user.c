@@ -14,15 +14,33 @@ void show_current_time(){
 }
 
 void test_write(){
+  char* banner_W = "\n\n[!] Testing write syscall.\n";
+  if(write(1, banner_W, strlen(banner_W)) < 0) perror();
+
   /* Case 1: Bad file number */
   if(write(-1, "Test1", strlen("Test1")) < 0) perror();
 
   /* Case 2: Bad address */
   char* b;
-  if(write(1, b, strlen("Test2")) < 0) perror();
+  if(write(1, b, strlen("Test2.1")) < 0) perror();        // Test 2.1: NULL buffer
+  if(write(1, 0x1234, strlen("Test2.2")) < 0) perror();   // Test 2.2: Invalid address
 
   /* Case 3: Invalid argument */
   if(write(1, "Test3", -1) < 0) perror();
+}
+
+void test_gettime(){
+  char* banner_gt = "\n[!] Testing getTime syscall.\n";
+  if(write(1, banner_gt, strlen(banner_gt)) < 0) perror();
+  show_current_time();
+  while(gettime()<1000){}
+  show_current_time();
+}
+
+void test_pfault(){
+  if(write(1, "\n[!] Testing Page Fault exception\n", strlen("\n[!] Testing Page Fault exception\n")) < 0) perror();
+  char* p = 0;
+  *p = 'x';
 }
 
 int __attribute__ ((__section__(".text.main")))
@@ -31,21 +49,14 @@ int __attribute__ ((__section__(".text.main")))
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
     /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
-
-    /* Uncomment this to test page fault exception */
-    // char* p = 0;
-    // *p = 'x';
-
     /* Testing Syscall: Write */
-    if(write(1, "\n\n[!] Testing write syscall.\n", strlen("\n\n[!] Testing WRITE syscall.\n")) < 0) perror();
     test_write();
      
     /* Testing Syscall: getTime() */
-    if(write(1, "\n[!] Testing getTime syscall.\n", strlen("\n [!] Testing getTime syscall.\n")) < 0) perror();
-    show_current_time();
-    while(gettime()<1000){}
-    show_current_time();
+    test_gettime();
 
+    /* Testing Page fault exception */
+    // test_pfault();
 
   while(1) { }
 }
