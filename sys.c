@@ -19,6 +19,7 @@
 #define ESCRIPTURA 1
 
 extern int zeos_ticks;
+char my_buffer[512];
 
 int check_fd(int fd, int permissions)
 {
@@ -71,8 +72,7 @@ int sys_write(int fd, char * buffer, int size)
 
   /* Write data */
   int buffer_size = 512;
-  char my_buffer[buffer_size];
-
+  
   int wr_bytes;
   int bytes_left = size;
 
@@ -91,7 +91,7 @@ int sys_write(int fd, char * buffer, int size)
     bytes_left -= wr_bytes;
   }
 
-  return size - bytes_left;
+  return size;
 }
 
 int sys_gettime(){
