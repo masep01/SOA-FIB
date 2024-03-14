@@ -109,7 +109,7 @@ ENTRY (keyboard_handler)
 ENTRY (my_page_fault_handler)
       # No SAVE_ALL, since we do not return to user mode.
       call my_page_fault_routine
-      iret
+      # cabronazo --> iret
 
 ENTRY (writeMSR)
       # Description: Write the value in EDX:EAX to MSR specified by ECX.
