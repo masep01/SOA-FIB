@@ -18,6 +18,7 @@ struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
   struct list_head anchor;  /* Anchor */
+  unsigned long kernel_esp;  /* Position in the stack */
 };
 
 union task_union {
