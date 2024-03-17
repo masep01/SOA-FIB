@@ -69,6 +69,7 @@ void init_idle (void)
 
 	/* Initialize dir_pages_baseAaddr */
 	allocate_DIR(ts);
+
 	/* Store in the stack the & of cpu_idle function (next process to execute) */
 	((union task_union*)ts)->stack[KERNEL_STACK_SIZE - 1] = (unsigned long) cpu_idle;
 
@@ -86,6 +87,27 @@ void init_idle (void)
 
 void init_task1(void)
 {
+	/* Get task_struct */
+	struct list_head *first_e = list_first(&freeQueue);
+	list_del(first_e);
+
+	struct task_struct *ts = list_head_to_task_struct(first_e);
+
+	/* Set PID = 1 */
+	ts->PID = 1;
+
+	/* Initialize dir_pages_baseAaddr */
+	allocate_DIR(ts);
+
+	/* Initialize address space */
+	set_user_pages(ts);
+
+	/* Make TSS point to new task system stack and also MSR 0x175*/
+	tss.esp0 = (DWord)((union task_union*)ts)->stack[KERNEL_STACK_SIZE];
+	writeMSR(0x175, (unsigned long) tss.esp0);
+
+	/* Set page directory */
+	set_cr3(ts->dir_pages_baseAddr);
 }
 
 
