@@ -103,7 +103,7 @@ void init_task1(void)
 	set_user_pages(ts);
 
 	/* Make TSS point to new task system stack and also MSR 0x175*/
-	tss.esp0 = (DWord)((union task_union*)ts)->stack[KERNEL_STACK_SIZE];
+	tss.esp0 = (DWord)&((union task_union*)ts)->stack[KERNEL_STACK_SIZE];
 	writeMSR(0x175, (unsigned long) tss.esp0);
 
 	/* Set page directory */
