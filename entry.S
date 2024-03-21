@@ -129,4 +129,39 @@ ENTRY (writeMSR)
       popl %ebp
       
       ret
-      
+
+ENTRY (task_switch)
+      pushl %ebp
+      movl %esp, %ebp
+
+      # Store ESI, EDI and EBX
+      pushl %esi
+      pushl %edi
+      pushl %ebx
+
+      # Pass *new
+      pushl 8(%ebp)
+
+      call inner_task_switch
+
+      addl $4, %esp
+
+      popl %ebx
+      popl %edi
+      popl %esi
+
+      movl %ebp, %esp
+      popl %ebp
+
+      ret
+
+ENTRY (inner_task_switch_as)
+      pushl %ebp
+      movl %esp, %ebp
+
+      movl %ebp, 8(%ebp)      // 3) current()->kernel_esp = %EBP
+      movl %esp, 12(%ebp)     // 4) %ESP = new->task.kernel_esp
+
+      movl %ebp, %esp
+      popl %ebp
+      ret

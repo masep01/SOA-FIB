@@ -50,10 +50,10 @@ int __attribute__ ((__section__(".text.main")))
     /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
     /* Testing Syscall: Write */
-    test_write();
+    //test_write();
 
     /* Testing Syscall: getTime() */
-    test_gettime();
+    //test_gettime();
 
     /* Testing Page fault exception */
     // test_pfault();

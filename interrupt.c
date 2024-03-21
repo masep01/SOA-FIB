@@ -13,6 +13,7 @@ Gate idt[IDT_ENTRIES];
 Register    idtR;
 
 int zeos_ticks = 0;
+extern struct task_struct * idle_task;
 
 char char_map[] =
 {
@@ -101,6 +102,9 @@ void syscall_handler_sysenter();
 void clock_routine(){
   zeos_ticks++;
   zeos_show_clock();
+  if(zeos_ticks == 100){
+    task_switch(idle_task);
+  }
 }
 
 /* Others */

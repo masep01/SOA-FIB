@@ -48,8 +48,37 @@ current() devuelve -> puntero a task_struct
 
 <br>
 
+## Fork
+Cuando me dicen que asigne un directorio al proceso -> Quiere decir que asigno un directorio y un trozo de la TP.
+
 ## Todo
-+ Ready queue
-+ Free queue
-+ Inicializar estas estructuras
-+ crear idle, task1
++ ~~Ready queue~~
++ ~~Free queue~~
++ ~~Inicializar estas estructuras~~
++ ~~crear idle, task1~~
++ `task_switch` ---> `inner_task_switch`
+    - Se tiene que implementar un `task_switch` que llame a `inner_task_switch` y que hace: 
+        1. Guardar en la pila `ebx`, `esi` y `edi`
+        2. Llamar a `inner_task_switch`
+    - Un trozo va `sched.c` y el ot
++ `sys_fork`
++ `scheduler`
+    - RoundRobin (RR) ---> Quantum (dentro de `task_struct`)
+    - Dentro de `clock_routine`: se llama a `schedule()`
+        1. `schedule()` llama a `update_sched_data()` (decrementa tics restantes del proceso para salir d la CPU)
+        2. implementar `needs_sched()`: mira si se ha expirado el quantum del proceso actual.
+            - Devuelve 0 si aun tiene
+            - Devuelve 1 si hay que hecharlo
+        3. implementar `update_process_state()`: cambia de estado a un proceso, tiene 2 parametros, el proceso y la cola donde va a ir.
+
+        ```C
+        schedule(){
+            update_sched_data();
+            if(needs_sched()){
+                update_process_state();
+                sched.next();
+            }
+        }
+        ```
++ `block`: bloquea el proceso
++ `unblock` desbloquea el proceso

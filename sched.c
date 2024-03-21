@@ -52,7 +52,7 @@ void cpu_idle(void)
 
 	while(1)
 	{
-	;
+		printk("Estoy en idle!\n");
 	}
 }
 
@@ -134,5 +134,27 @@ struct task_struct* current()
 	: "=g" (ret_value)
   );
   return (struct task_struct*)(ret_value&0xfffff000);
+}
+
+void task_switch(union task_union *new);
+
+void inner_task_switch_as(unsigned long *current_kernel_esp, unsigned long *new_kernel_esp);
+
+void inner_task_switch(union task_union *new){
+
+	/* 1) Update pointer to Sys Stack of the new process */
+	tss.esp0 = (DWord)&((union task_union*)new)->stack[KERNEL_STACK_SIZE];
+	writeMSR(0x175, (unsigned long) tss.esp0);
+
+	printk("\n1\n");
+	/* 2) Change user space address space */
+	set_cr3(new->task.dir_pages_baseAddr);
+
+	printk("2\n");
+
+	/* Call Assembler part */
+	inner_task_switch_as(current()->kernel_esp, new->task.kernel_esp);
+
+	printk("3\n");
 }
 
