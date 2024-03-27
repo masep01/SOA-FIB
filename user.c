@@ -43,6 +43,12 @@ void test_pfault(){
   *p = 'x';
 }
 
+void test_getpid(){
+  itoa(getpid(), buff);
+  if(write(1, "\n[!] Current PID: ", strlen("\n[!] Current PID: ")) < 0) perror();
+  if(write(1, buff, strlen(buff)) < 0) perror();
+}
+
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
@@ -57,6 +63,8 @@ int __attribute__ ((__section__(".text.main")))
 
     /* Testing Page fault exception */
     // test_pfault();
-
+    
+    /* Testing getpid */
+    test_getpid();
   while(1) { }
 }

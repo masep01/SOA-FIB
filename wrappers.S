@@ -59,7 +59,7 @@ return_wr_sys:
 	ret
 
 ENTRY(gettime)
-     # Save base pointer
+    # Save base pointer
     pushl %ebp
     mov %esp, %ebp
 
@@ -97,6 +97,95 @@ gettime_error:
     movl $-1, %eax
 
 return_gt_sys:
+    popl %edx
+    popl %ecx
+    movl %esp, %ebp
+    popl %ebp
+	ret
+
+ENTRY(getpid)
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Save getpid ID in syscall table
+    movl $20, %eax
+
+    # Store ECX and EDX in user stack
+    pushl %ecx
+    pushl %edx
+
+    # Store return address and sysenter
+    pushl $getpid_return
+
+    # Fake dynamic link
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Enter the system
+    sysenter
+
+getpid_return:
+    # Remove temporal data
+    popl %ebp
+    addl $4, %esp
+
+    # Process the result
+    cmpl $0, %eax
+    jl getpid_error        # If eax < 0, error. Return otherwise.
+    jmp return_gp_sys
+
+getpid_error:
+    # Obtain positive errno
+    negl %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+return_gp_sys:
+    popl %edx
+    popl %ecx
+    movl %esp, %ebp
+    popl %ebp
+	ret
+
+
+ENTRY(fork)
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Save getpid ID in syscall table
+    movl $2, %eax
+
+    # Store ECX and EDX in user stack
+    pushl %ecx
+    pushl %edx
+
+    # Store return address and sysenter
+    pushl $fork_return
+
+    # Fake dynamic link
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Enter the system
+    sysenter
+
+fork_return:
+    # Remove temporal data
+    popl %ebp
+    addl $4, %esp
+
+    # Process the result
+    cmpl $0, %eax
+    jl fork_error        # If eax < 0, error. Return otherwise.
+    jmp return_gp_sys
+
+fork_error:
+    # Obtain positive errno
+    negl %eax
+    movl %eax, errno
+    movl $-1, %eax
+
+return_f_sys:
     popl %edx
     popl %ecx
     movl %esp, %ebp

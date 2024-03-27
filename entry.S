@@ -160,8 +160,7 @@ ENTRY (inner_task_switch_as)
       movl %esp, %ebp
 
       movl %ebp, 8(%ebp)      // 3) current()->kernel_esp = %EBP
-      movl %esp, 12(%ebp)     // 4) %ESP = new->task.kernel_esp
+      movl 12(%ebp), %esp     // 4) %ESP = new->task.kernel_esp
 
-      movl %ebp, %esp
       popl %ebp
       ret

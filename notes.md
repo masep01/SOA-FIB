@@ -56,11 +56,12 @@ Cuando me dicen que asigne un directorio al proceso -> Quiere decir que asigno u
 + ~~Free queue~~
 + ~~Inicializar estas estructuras~~
 + ~~crear idle, task1~~
-+ `task_switch` ---> `inner_task_switch`
-    - Se tiene que implementar un `task_switch` que llame a `inner_task_switch` y que hace: 
-        1. Guardar en la pila `ebx`, `esi` y `edi`
-        2. Llamar a `inner_task_switch`
-    - Un trozo va `sched.c` y el ot
++ ~~`task_switch` ---> `inner_task_switch`~~
+    - ~~Se tiene que implementar un `task_switch` que llame a ~~`inner_task_switch` y que hace: ~~ 
+        1. ~~ Guardar en la pila `ebx`, `esi` y `edi`~~
+        2. ~~Llamar a `inner_task_switch`~~
+   ~~ - Un trozo va `sched.c` y el ot~~
+
 + `sys_fork`
 + `scheduler`
     - RoundRobin (RR) ---> Quantum (dentro de `task_struct`)
