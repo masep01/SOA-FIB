@@ -177,7 +177,7 @@ fork_return:
     # Process the result
     cmpl $0, %eax
     jl fork_error        # If eax < 0, error. Return otherwise.
-    jmp return_gp_sys
+    jmp return_f_sys
 
 fork_error:
     # Obtain positive errno

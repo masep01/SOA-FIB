@@ -65,6 +65,21 @@ int __attribute__ ((__section__(".text.main")))
     // test_pfault();
     
     /* Testing getpid */
-    test_getpid();
+    //test_getpid();
+
+    int pid = fork();
+    itoa(pid, buff);
+    
+    if(pid > 0){
+      write(1, "\nSoy el padre.\n", sizeof("\nSoy el padre.\n"));
+      write(1, "[!] PID del Hijo: ",sizeof("[!] PID del Hijo: "));
+      write(1, buff, sizeof(buff));
+      test_getpid();
+    }
+    else {
+      write(1, "\nSoy el hijo.\n", sizeof("\nSoy el hijo.\n"));
+      test_getpid();
+    }
+
   while(1) { }
 }

@@ -103,7 +103,7 @@ void clock_routine(){
   zeos_ticks++;
   zeos_show_clock();
   if(zeos_ticks == 300){
-    task_switch(idle_task);
+    //task_switch(idle_task);
   }
 }
 

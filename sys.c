@@ -22,6 +22,7 @@ int global_PID = 300;
 
 extern int zeos_ticks;
 extern struct list_head freeQueue, readyQueue;
+int getEbp();
 
 char my_buffer[512];
 
@@ -42,7 +43,12 @@ int sys_getpid()
 	return current()->PID;
 }
 
-void init_child_address_space(struct task_struct *child_ts){
+int ret_from_fork()
+{
+  return 0;
+}
+
+int init_child_address_space(struct task_struct *child_ts){
 
   /* Free frames */
   int frameNumbers[NUM_PAG_DATA];
@@ -53,7 +59,7 @@ void init_child_address_space(struct task_struct *child_ts){
     if(frameNumbers[i] < 0){
       // Set assigned frames free in case of error and put pcb in freequeue again
       for(int j = 0; j < i; ++j) free_frame(frameNumbers[j]);
-      list_add_tail(&child_ts.anchor, &freeQueue);
+      list_add_tail(&(child_ts->anchor), &freeQueue);
       return -EAGAIN;
     }
   }
@@ -83,8 +89,8 @@ void init_child_address_space(struct task_struct *child_ts){
   }
 
   /* 4) Copy DATA + STACK to child */
-  int SHARED_SPACE = NUM_PAG_KERNEL+NUM_PAG_CODE;
-	int TOTAL_SPACE = NUM_PAG_CODE+NUM_PAG_KERNEL+NUM_PAG_DATA;
+  int SHARED_SPACE = NUM_PAG_KERNEL + NUM_PAG_CODE;
+	int TOTAL_SPACE = SHARED_SPACE + NUM_PAG_DATA;
 
 	for(int i = SHARED_SPACE; i < TOTAL_SPACE; i++){
 
@@ -100,12 +106,12 @@ void init_child_address_space(struct task_struct *child_ts){
 
   /* Flush parent's TLB to disable access from parent to child's TLB */
   set_cr3(get_DIR(current()));
+
+  return 0;
 }
 
 int sys_fork()
 {
-  int PID=-1;
-
   // 1) Get free task_struct
   if(list_empty(&freeQueue)) return -ENOMEM;
   struct list_head *lh = list_first(&freeQueue);
@@ -121,13 +127,26 @@ int sys_fork()
   allocate_DIR(child_ts);
 
   // 4) Initalize child's address space
-  init_child_address_space(child_ts);
+  int res = init_child_address_space(child_ts);
+  if(res < 0) return res;
 
   // 5) Assign PID
   child_pcb->task.PID = ++global_PID;
 	child_pcb->task.state = ST_READY;
 
-  return PID;
+  // 6) Prepare child to task_switch call
+  int ret  = (getEbp() - (int) current())/sizeof(int);
+    // Put @ret_from_fork in @ret
+  child_pcb->stack[ret] = &ret_from_fork;
+    // Put fake %ebp
+  child_pcb->stack[ret-1] = 0;
+    // Make %esp point to @ret
+  child_pcb->task.kernel_esp = &(child_pcb->stack[ret-1]);
+
+  // 7) Add child to READY queue
+  list_add_tail(&(child_pcb->task.anchor), &readyQueue);
+
+  return child_pcb->task.PID;
 }
 
 void sys_exit()
