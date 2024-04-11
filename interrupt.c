@@ -14,6 +14,7 @@ Register    idtR;
 
 int zeos_ticks = 0;
 extern struct task_struct * idle_task;
+extern struct task_struct * global_child;
 
 char char_map[] =
 {
@@ -102,8 +103,8 @@ void syscall_handler_sysenter();
 void clock_routine(){
   zeos_ticks++;
   zeos_show_clock();
-  if(zeos_ticks == 300){
-    //task_switch(idle_task);
+  if(zeos_ticks == 500){
+    task_switch(global_child);
   }
 }
 

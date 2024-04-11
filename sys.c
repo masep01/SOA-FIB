@@ -22,7 +22,10 @@ int global_PID = 300;
 
 extern int zeos_ticks;
 extern struct list_head freeQueue, readyQueue;
+
 int getEbp();
+
+struct task_struct *global_child;
 
 char my_buffer[512];
 
@@ -89,19 +92,20 @@ int init_child_address_space(struct task_struct *child_ts){
   }
 
   /* 4) Copy DATA + STACK to child */
-  int SHARED_SPACE = NUM_PAG_KERNEL + NUM_PAG_CODE;
-	int TOTAL_SPACE = SHARED_SPACE + NUM_PAG_DATA;
+  int INITIAL = NUM_PAG_KERNEL;
+	int TOTAL_SPACE = INITIAL + NUM_PAG_DATA;
+  int FREE = NUM_PAG_KERNEL + NUM_PAG_CODE + NUM_PAG_DATA;
 
-	for(int i = SHARED_SPACE; i < TOTAL_SPACE; i++){
+	for(int i = INITIAL; i < TOTAL_SPACE; i++){
 
 		/* Temporal mapping of parent's PT free entry with child's frame */
-    set_ss_pag(PT_parent, i+NUM_PAG_DATA, get_frame(PT_child, i));
+    set_ss_pag(PT_parent, i+FREE, get_frame(PT_child, i));
 
 		/* Copy data from parent's frame to child */
-    copy_data((void *) (i << 12), (void *) ((i+NUM_PAG_DATA) << 12), PAGE_SIZE);
+    copy_data((void *) (i << 12), (void *) ((i+FREE) << 12), PAGE_SIZE);
 		
     /* Delete temporal mapping from parent's PT */
-    del_ss_pag(PT_parent, i+NUM_PAG_DATA);
+    del_ss_pag(PT_parent, i+FREE);
 	}
 
   /* Flush parent's TLB to disable access from parent to child's TLB */
@@ -135,17 +139,18 @@ int sys_fork()
 	child_pcb->task.state = ST_READY;
 
   // 6) Prepare child to task_switch call
-  int ret  = (getEbp() - (int) current())/sizeof(int);
+  int new_ret = 1006;
     // Put @ret_from_fork in @ret
-  child_pcb->stack[ret] = &ret_from_fork;
+  child_pcb->stack[new_ret] = &ret_from_fork;
     // Put fake %ebp
-  child_pcb->stack[ret-1] = 0;
-    // Make %esp point to @ret
-  child_pcb->task.kernel_esp = &(child_pcb->stack[ret-1]);
+  child_pcb->stack[new_ret-1] = 0;
+    // Make %esp point to %ebp
+  child_pcb->task.kernel_esp = &(child_pcb->stack[new_ret-1]);
 
   // 7) Add child to READY queue
   list_add_tail(&(child_pcb->task.anchor), &readyQueue);
 
+  global_child = child_ts;
   return child_pcb->task.PID;
 }
 
