@@ -191,3 +191,36 @@ return_f_sys:
     movl %esp, %ebp
     popl %ebp
 	ret
+
+ENTRY(exit)
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Save exit ID in syscall table
+    movl $1, %eax
+
+    # Store ECX and EDX in user stack
+    pushl %ecx
+    pushl %edx
+
+    # Store return address and sysenter
+    pushl $exit_return
+
+    # Fake dynamic link
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Enter the system
+    sysenter
+
+exit_return:
+    # Remove temporal data
+    popl %ebp
+    addl $4, %esp
+
+    popl %edx
+    popl %ecx
+    movl %esp, %ebp
+    popl %ebp
+	ret
+    

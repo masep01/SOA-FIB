@@ -103,9 +103,8 @@ void syscall_handler_sysenter();
 void clock_routine(){
   zeos_ticks++;
   zeos_show_clock();
-  if(zeos_ticks == 500){
-    task_switch(global_child);
-  }
+  //schedule();
+  if(zeos_ticks == 200) task_switch(global_child);
 }
 
 /* Others */

@@ -23,8 +23,6 @@ int global_PID = 300;
 extern int zeos_ticks;
 extern struct list_head freeQueue, readyQueue;
 
-int getEbp();
-
 struct task_struct *global_child;
 
 char my_buffer[512];
@@ -156,6 +154,22 @@ int sys_fork()
 
 void sys_exit()
 {  
+  /* 1) Free the data structures and resources */
+  for (int i = 0; i < NUM_PAG_DATA; i++)
+  {
+    // Free frames from current PAGE TABLE
+    free_frame(get_frame(get_PT(current()), i+PAG_LOG_INIT_DATA));
+    // Clean PAGE TABLE entries
+    del_ss_pag(get_PT(current()), i+PAG_LOG_INIT_DATA);
+  }
+
+  /* 2) Invalidate PT and PID */
+  current()->dir_pages_baseAddr = NULL;
+  current()->PID = -1;
+
+  /* 3) Select new process to be executed */
+  update_process_state_rr(current(), &freeQueue);
+  sched_next_rr();
 }
 
 int sys_write(int fd, char * buffer, int size)

@@ -165,6 +165,3 @@ ENTRY (inner_task_switch_as)
       popl %ebp
       ret
 
-ENTRY(getEbp)
-      movl %ebp, %eax
-      ret

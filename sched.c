@@ -22,6 +22,8 @@ struct list_head readyQueue;
 
 struct task_struct * idle_task;
 
+int quantum_left = 0;
+
 /* get_DIR - Returns the Page Directory address for task 't' */
 page_table_entry * get_DIR (struct task_struct *t) 
 {
@@ -67,6 +69,9 @@ void init_idle (void)
 	/* Set PID = 0 */
 	ts->PID = 0;
 
+	/* Set quantum */
+	set_quantum(ts, DEFAULT_QUANTUM);
+
 	/* Initialize dir_pages_baseAaddr */
 	allocate_DIR(ts);
 
@@ -74,7 +79,7 @@ void init_idle (void)
 	((union task_union*)ts)->stack[KERNEL_STACK_SIZE - 1] = (unsigned long) cpu_idle;
 
 	/* Store in the stack the initial value that we want to assign to register ebp when
-	   undoing the dynamic link  
+	 * undoing the dynamic link  
 	*/
 	((union task_union*)ts)->stack[KERNEL_STACK_SIZE - 2] = (unsigned long) 0;
 
@@ -96,6 +101,9 @@ void init_task1(void)
 	/* Set PID = 1 */
 	ts->PID = 1;
 
+	/* Set quantum */
+	set_quantum(ts, DEFAULT_QUANTUM);
+
 	/* Initialize dir_pages_baseAaddr */
 	allocate_DIR(ts);
 
@@ -109,7 +117,6 @@ void init_task1(void)
 	/* Set page directory */
 	set_cr3(ts->dir_pages_baseAddr);
 }
-
 
 void init_sched()
 {
@@ -153,3 +160,74 @@ void inner_task_switch(union task_union *new){
 	inner_task_switch_as(current()->kernel_esp, new->task.kernel_esp);
 }
 
+int get_quantum(struct task_struct *t)
+{
+  return t->quantum;
+}
+
+void set_quantum(struct task_struct *t, int new_quantum)
+{
+  t->quantum=new_quantum;
+}
+
+void update_sched_data_rr (void){
+	--quantum_left;
+}
+
+int needs_sched_rr (void){
+	if(quantum_left > 0 ) return 0;
+
+	if(list_empty(&readyQueue)){
+		quantum_left = get_quantum(current());
+		return 0;
+
+	} else return 1;
+}
+
+void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue){
+	
+	/*
+	 *  If process is not Running, then we delete it from its queue.
+	 *	If it is Running, then it is not in any queue.
+	*/
+	if(t->state != ST_RUN) list_del(&t->anchor);
+
+	/*
+	 *  If dest queue is not NULL (not RUNNING), means that the new state is READY or BLOCKED
+	 *	We change the state by checking which Queue is the dest queue, and add process to it if needed.
+	*/
+	if(dst_queue != NULL){
+		if(dst_queue == &readyQueue) t->state = ST_READY;
+		else t->state = ST_BLOCKED;
+		list_add_tail(&(t->anchor), dst_queue);
+
+	} else t->state = ST_RUN;
+}
+
+void sched_next_rr (void){
+	struct task_struct *next = idle_task;
+
+	/* Check if a process is ready to switch, otherwise idle will run */
+	if(!list_empty(&readyQueue)){
+		struct list_head *lh = list_first(&readyQueue);
+		list_del(lh);
+		next = list_head_to_task_struct(lh);
+	}
+	
+	/* Update the new quantum and call task_switch */
+	quantum_left = get_quantum(next);
+	task_switch((union task_union*)next);
+}
+
+void schedule(){
+	/* Update the number of ticks that the process has executed since it got assigned the cpu */
+	update_sched_data_rr();
+
+	/* Check if is necessary to change the current process*/
+	if(needs_sched_rr()) {
+		/* Update the current state of a process to a new state */
+		update_process_state_rr(current(), &readyQueue);
+		/* Select the next process to execte and call task_switch */
+		sched_next_rr();
+	}
+}

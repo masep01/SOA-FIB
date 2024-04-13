@@ -47,6 +47,7 @@ void test_getpid(){
   itoa(getpid(), buff);
   if(write(1, "\n[!] Current PID: ", strlen("\n[!] Current PID: ")) < 0) perror();
   if(write(1, buff, strlen(buff)) < 0) perror();
+  if(write(1, "\n", strlen("\n")) < 0) perror();
 }
 
 int __attribute__ ((__section__(".text.main")))
@@ -72,14 +73,17 @@ int __attribute__ ((__section__(".text.main")))
     
     if(pid > 0){
       write(1, "\nSoy el padre.\n", sizeof("\nSoy el padre.\n"));
-      write(1, "[!] PID del Hijo: ",sizeof("[!] PID del Hijo: "));
-      write(1, buff, sizeof(buff));
       test_getpid();
+
     }
     else {
       write(1, "\nSoy el hijo.\n", sizeof("\nSoy el hijo.\n"));
       test_getpid();
+      exit();
     }
+
+    write(1, "\nHola\n", sizeof("\nHola\n"));
+
 
   while(1) { }
 }

@@ -12,6 +12,8 @@
 #define NR_TASKS      10
 #define KERNEL_STACK_SIZE	1024
 
+#define DEFAULT_QUANTUM 100
+
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 struct task_struct {
@@ -19,13 +21,13 @@ struct task_struct {
   page_table_entry * dir_pages_baseAddr;
   struct list_head anchor;  /* Anchor */
   unsigned long kernel_esp;  /* Position in the stack */
-  enum state_t state;
+  enum state_t state;     /* Process state */
+  unsigned long quantum;  /* Quantum */
 };
 
 union task_union {
   struct task_struct task;
   unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
-  
 };
 
 extern union task_union task[NR_TASKS]; /* Vector de tasques */
