@@ -37,6 +37,14 @@ page_table_entry * get_PT (struct task_struct *t)
 }
 
 
+/* Extra useful functions */
+
+// Returns %ebp
+unsigned long * getEbp();
+
+// Sets %esp with value of kernel_esp
+void setEsp(unsigned long kernel_esp);
+
 int allocate_DIR(struct task_struct *t) 
 {
 	int pos;
@@ -52,10 +60,8 @@ void cpu_idle(void)
 {
 	__asm__ __volatile__("sti": : :"memory");
 
-	while(1)
-	{
-		printk("Estoy en idle!\n");
-	}
+	printk("Estoy en idle!\n");
+	while(1) {}
 }
 
 void init_idle (void)
@@ -103,6 +109,7 @@ void init_task1(void)
 
 	/* Set quantum */
 	set_quantum(ts, DEFAULT_QUANTUM);
+	quantum_left = ts->quantum;
 
 	/* Initialize dir_pages_baseAaddr */
 	allocate_DIR(ts);
@@ -157,7 +164,10 @@ void inner_task_switch(union task_union *new){
 	set_cr3(get_DIR(&(new->task)));
 	
 	/* Call Assembler part */
-	inner_task_switch_as(current()->kernel_esp, new->task.kernel_esp);
+	//inner_task_switch_as(current()->kernel_esp, new->task.kernel_esp);
+	current()->kernel_esp = (unsigned long *) getEbp();
+
+	setEsp(new->task.kernel_esp);
 }
 
 int get_quantum(struct task_struct *t)

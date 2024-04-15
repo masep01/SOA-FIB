@@ -109,7 +109,6 @@ ENTRY (keyboard_handler)
 ENTRY (my_page_fault_handler)
       # No SAVE_ALL, since we do not return to user mode.
       call my_page_fault_routine
-      # cabronazo --> iret
 
 ENTRY (writeMSR)
       # Description: Write the value in EDX:EAX to MSR specified by ECX.
@@ -127,7 +126,6 @@ ENTRY (writeMSR)
       wrmsr
 
       popl %ebp
-      
       ret
 
 ENTRY (task_switch)
@@ -159,9 +157,19 @@ ENTRY (inner_task_switch_as)
       pushl %ebp
       movl %esp, %ebp
 
+      // I think this part is wrong
       movl %ebp, 8(%ebp)      // 3) current()->kernel_esp = %EBP
       movl 12(%ebp), %esp     // 4) %ESP = new->task.kernel_esp
 
+      movl %ebp, %esp
       popl %ebp
       ret
 
+ENTRY (getEbp)
+      movl %ebp, %eax
+      ret
+
+ENTRY (setEsp)
+      movl 4(%esp), %esp
+      popl %ebp
+      ret

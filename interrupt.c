@@ -103,8 +103,7 @@ void syscall_handler_sysenter();
 void clock_routine(){
   zeos_ticks++;
   zeos_show_clock();
-  //schedule();
-  if(zeos_ticks == 200) task_switch(global_child);
+  schedule();
 }
 
 /* Others */
