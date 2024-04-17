@@ -200,8 +200,12 @@ void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue
 	 *  If process is not Running, then we delete it from its queue.
 	 *	If it is Running, then it is not in any queue.
 	*/
-	if(t->state != ST_RUN) list_del(&t->anchor);
-
+	if(t->state != ST_RUN) {
+		printk("Antes");
+		list_del(&(t->anchor));
+		printk("Despues");
+	}
+	
 	/*
 	 *  If dest queue is not NULL (not RUNNING), means that the new state is READY or BLOCKED
 	 *	We change the state by checking which Queue is the dest queue, and add process to it if needed.
@@ -232,7 +236,7 @@ void sched_next_rr (void){
 void schedule(){
 	/* Update the number of ticks that the process has executed since it got assigned the cpu */
 	update_sched_data_rr();
-
+	
 	/* Check if is necessary to change the current process*/
 	if(needs_sched_rr()) {
 		/* Update the current state of a process to a new state */
