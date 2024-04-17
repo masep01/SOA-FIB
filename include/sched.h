@@ -17,12 +17,16 @@
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 struct task_struct {
-  int PID;			/* Process ID. This MUST be the first field of the struct. */
+  int PID;			                     /* Process ID. This MUST be the first field of the struct. */
   page_table_entry * dir_pages_baseAddr;
-  struct list_head anchor;  /* Anchor */
-  unsigned long kernel_esp;  /* Position in the stack */
-  enum state_t state;     /* Process state */
-  unsigned long quantum;  /* Quantum */
+  struct list_head anchor;          /* Anchor */
+  unsigned long kernel_esp;         /* Position in the stack */
+  enum state_t state;               /* Process state */
+  unsigned long quantum;            /* Quantum */
+
+  struct list_head children;        /* List of children */
+  struct list_head anchor_parent;   /* Anchor for child */
+  struct task_struct *parent;       /* Pointer to parent */
 };
 
 union task_union {

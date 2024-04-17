@@ -74,16 +74,16 @@ int __attribute__ ((__section__(".text.main")))
     if(pid > 0){
       write(1, "\nSoy el padre.\n", sizeof("\nSoy el padre.\n"));
       test_getpid();
-      //exit();
+      exit();
       while(1) write(1, "\nSigo en padre.\n", sizeof("\nSigo en padre.\n"));
 
     } else {
       write(1, "\nSoy el hijo.\n", sizeof("\nSoy el hijo.\n"));
       test_getpid();
-      //exit();
+      exit();
       while(1) write(1, "\nSigo en hijo.\n", sizeof("\nSigo en hijo.\n"));
     }
 
-    // Fails when both father and son are alive and they are switching always. Eventually we recieve a PAGEFAULT in son's code.
+    // Fails when both father and son are alive and they are switching always. Eventually we recieve a PAGEFAULT.
   while(1) { }
 }

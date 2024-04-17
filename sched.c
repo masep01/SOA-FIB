@@ -92,6 +92,9 @@ void init_idle (void)
 	/* Store in a new field of task_struct the position of the stack where is the value for the ebp register*/
 	((union task_union*)ts)->task.kernel_esp = &(((union task_union*)ts)->stack[KERNEL_STACK_SIZE - 2]);
 
+	/* Initialize children list */
+	INIT_LIST_HEAD(&(ts->children));
+
 	/* Initilaize idle_task variable */
 	idle_task = ts;
 }
@@ -123,6 +126,9 @@ void init_task1(void)
 
 	/* Set page directory */
 	set_cr3(ts->dir_pages_baseAddr);
+
+	/* Initialize children list */
+	INIT_LIST_HEAD(&(ts->children));
 }
 
 void init_sched()

@@ -24,6 +24,7 @@ extern int zeos_ticks;
 extern struct list_head freeQueue, readyQueue;
 
 struct task_struct *global_child;
+extern struct task_struct * idle_task;
 
 char my_buffer[512];
 
@@ -125,6 +126,11 @@ int sys_fork()
   union task_union *child_pcb = (union task_union*)child_ts;
   copy_data(current(), child_pcb, sizeof(union task_union));
 
+  // 2.1) Block/unblock stuff
+  INIT_LIST_HEAD(&(child_ts->children));
+  list_add_tail(&(child_ts->anchor_parent), &(current()->children));
+  child_ts->parent = current();
+
   // 3) New page directory for child
   allocate_DIR(child_ts);
 
@@ -166,6 +172,19 @@ void sys_exit()
   /* 2) Invalidate PT and PID */
   current()->dir_pages_baseAddr = NULL;
   current()->PID = -1;
+
+  /* 2.1) Block/unblock stuff */
+  list_del(&(current()->anchor_parent));    // Remove child from its parent
+
+  // Inherit childs to idle process
+  struct list_head *children = &(current()->children);
+  if(!list_empty(children)){
+    struct list_head *child = list_first(children);
+    list_for_each(child, children){
+      list_del(child);
+      list_add(child, &(idle_task->children));
+    }
+  }
 
   /* 3) Select new process to be executed */
   update_process_state_rr(current(), &freeQueue);
@@ -218,4 +237,12 @@ int sys_write(int fd, char * buffer, int size)
 
 int sys_gettime(){
   return zeos_ticks;
+}
+
+void sys_block(){
+  
+}
+
+int sys_unblock(int pid){
+
 }
