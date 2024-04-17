@@ -152,7 +152,7 @@ ENTRY(fork)
     pushl %ebp
     movl %esp, %ebp
 
-    # Save getpid ID in syscall table
+    # Save fork ID in syscall table
     movl $2, %eax
 
     # Store ECX and EDX in user stack
@@ -224,3 +224,71 @@ exit_return:
     popl %ebp
 	ret
     
+ENTRY (block)
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Save block ID in syscall table
+    movl $6, %eax
+
+    # Store ECX and EDX in user stack
+    pushl %ecx
+    pushl %edx
+
+    # Store return address and sysenter
+    pushl $block_return
+
+    # Fake dynamic link
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Enter the system
+    sysenter
+
+block_return:
+    # Remove temporal data
+    popl %ebp
+    addl $4, %esp
+
+    popl %edx
+    popl %ecx
+    movl %esp, %ebp
+    popl %ebp
+	ret
+
+ENTRY (unblock)
+    pushl %ebp
+    movl %esp, %ebp
+
+    pushl %edx
+    # Save unblock ID in syscall table
+    movl $7, %eax
+
+    # Pass pid as the single parameter
+    movl 8(%ebp),  %edx
+
+    # Store ECX and EDX in user stack
+    pushl %ecx
+    pushl %edx
+
+    # Store return address and sysenter
+    pushl $unblock_return
+
+    # Fake dynamic link
+    pushl %ebp
+    movl %esp, %ebp
+
+    # Enter the system
+    sysenter
+
+unblock_return:
+    # Remove temporal data
+    popl %ebp
+    addl $4, %esp
+    popl %edx
+
+    popl %edx
+    popl %ecx
+    movl %esp, %ebp
+    popl %ebp
+	ret

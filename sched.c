@@ -16,7 +16,6 @@ struct task_struct *list_head_to_task_struct(struct list_head *l)
 }
 
 extern struct list_head blocked;
-
 struct list_head freeQueue;
 struct list_head readyQueue;
 
@@ -36,13 +35,10 @@ page_table_entry * get_PT (struct task_struct *t)
 	return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
 }
 
-
 /* Extra useful functions */
-
-// Returns %ebp
+	// Returns %ebp
 unsigned long * getEbp();
-
-// Sets %esp with value of kernel_esp
+	// Sets %esp with value of kernel_esp
 void setEsp(unsigned long kernel_esp);
 
 int allocate_DIR(struct task_struct *t) 
@@ -98,6 +94,7 @@ void init_idle (void)
 	/* Initialize children list */
 	INIT_LIST_HEAD(&(ts->children));
 	ts->parent = ts;
+	ts->pending_unblocks = 0;
 
 	/* Initilaize idle_task variable */
 	idle_task = ts;
@@ -134,23 +131,22 @@ void init_task1(void)
 	/* Set page directory */
 	set_cr3(ts->dir_pages_baseAddr);
 
-	/* Initialize children list */
+	/* Initialize children list and parent pointer */
 	INIT_LIST_HEAD(&(ts->children));
 	ts->parent = ts;
+	ts->pending_unblocks = 0;
 }
 
 void init_sched()
 {
-	/* Free Queue */
+	/* Initialize Queue */
 	INIT_LIST_HEAD(&freeQueue);
+	INIT_LIST_HEAD(&readyQueue);
+	INIT_LIST_HEAD(&blocked);
 
-	for (int i = 0; i < NR_TASKS; i++)
-	{
+	for (int i = 0; i < NR_TASKS; i++){
 		list_add(&(task[i].task.anchor), &freeQueue);
 	}
-	
-	/* Ready Queue */
-	INIT_LIST_HEAD(&readyQueue);
 }
 
 struct task_struct* current()

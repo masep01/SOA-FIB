@@ -23,8 +23,8 @@ int global_PID = 300;
 extern int zeos_ticks;
 extern struct list_head freeQueue, readyQueue;
 
-struct task_struct *global_child;
 extern struct task_struct * idle_task;
+extern struct list_head blocked;
 
 char my_buffer[512];
 
@@ -130,6 +130,7 @@ int sys_fork()
   INIT_LIST_HEAD(&(child_ts->children));
   list_add_tail(&(child_ts->anchor_parent), &(current()->children));
   child_ts->parent = current();
+  child_ts->pending_unblocks = 0;
 
   // 3) New page directory for child
   allocate_DIR(child_ts);
@@ -156,7 +157,6 @@ int sys_fork()
   // 7) Add child to READY queue
   list_add_tail(&(child_pcb->task.anchor), &readyQueue);
 
-  global_child = child_ts;
   return child_pcb->task.PID;
 }
 
@@ -176,16 +176,21 @@ void sys_exit()
   current()->PID = -1;
 
   /* 2.1) Block/unblock stuff */
-  list_del(&(current()->anchor_parent));    // Remove child from its parent
+  /* Remove child from its parent */
+  if(!current()->PID){
 
-  // Inherit childs to idle process
-  struct list_head *children = &(current()->children);
+    list_del(&(current()->anchor_parent)); 
 
-  if(!list_empty(children)){
-    struct list_head *child;
-    list_for_each(child, children){
-      list_del(child);
-      list_add(child, &(idle_task->children));
+    /* 2.2) Inherit childs to idle process */ 
+    struct list_head *children = &(current()->children);
+
+    if(!list_empty(children)){
+      struct list_head *child;
+      list_for_each(child, children){
+        struct task_struct *child_ts = list_head_to_task_struct(child);
+        list_del(&(child_ts->anchor_parent));
+        list_add(&(child_ts->anchor_parent), &(idle_task->children));
+      }
     }
   }
 
@@ -243,9 +248,38 @@ int sys_gettime(){
 }
 
 void sys_block(){
-  
+  if(current()->pending_unblocks == 0){
+    update_process_state_rr(current(), &blocked);
+    schedule();
+    
+  } else current()->pending_unblocks -= 1;
 }
 
 int sys_unblock(int pid){
+  /* 
+    We must check two conditions: 
+      - Process with {pid} is child of current
+      - Process with {pid} is blocked
+  */
+  struct list_head *children = &(current()->children);
+  if(!list_empty(children)){
+    struct list_head *child;
+    
+    list_for_each(child, children){
+      struct task_struct *child_ts = list_head_to_task_struct(child);
 
+      if(child_ts->PID == pid){
+
+        if(child_ts->state == ST_BLOCKED){
+          update_process_state_rr(child_ts, &readyQueue);
+
+        } else {
+          /* Otherwise increase pending unblocks */
+          child_ts->pending_unblocks += 1;
+        }
+        return 0;
+      }
+    }
+  } 
+  return -1; // Empty queue
 }

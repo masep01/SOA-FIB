@@ -14,7 +14,6 @@ Register    idtR;
 
 int zeos_ticks = 0;
 extern struct task_struct * idle_task;
-extern struct task_struct * global_child;
 
 char char_map[] =
 {

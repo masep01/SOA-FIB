@@ -27,6 +27,7 @@ struct task_struct {
   struct list_head children;        /* List of children */
   struct list_head anchor_parent;   /* Anchor for child */
   struct task_struct *parent;       /* Pointer to parent */
+  int pending_unblocks;               /* Pending unblocks */
 };
 
 union task_union {

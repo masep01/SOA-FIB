@@ -72,18 +72,29 @@ int __attribute__ ((__section__(".text.main")))
     itoa(pid, buff);
     
     if(pid > 0){
-      write(1, "\nSoy el padre.\n", sizeof("\nSoy el padre.\n"));
-      test_getpid();
-      exit();
-      while(1) write(1, "\nSigo en padre.\n", sizeof("\nSigo en padre.\n"));
+      //test_getpid();
+      //exit();
+      //while(1) write(1, "\nSigo en padre.\n", sizeof("\nSigo en padre.\n"));
 
     } else {
-      write(1, "\nSoy el hijo.\n", sizeof("\nSoy el hijo.\n"));
       test_getpid();
-      exit();
-      while(1) write(1, "\nSigo en hijo.\n", sizeof("\nSigo en hijo.\n"));
+      block();
+      test_getpid();
+      
+      //exit();
+      //while(1) write(1, "\nSigo en hijo.\n", sizeof("\nSigo en hijo.\n"));
     }
 
+    if(pid > 0){
+      test_gettime();
+      while(gettime() < 200){}
+
+      int res = unblock(pid);
+      itoa(res, buff);
+      //write(1, buff, sizeof(buff));
+    }
+
+    test_getpid();
 
   while(1) { }
 }
