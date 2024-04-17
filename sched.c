@@ -94,6 +94,7 @@ void init_idle (void)
 
 	/* Initialize children list */
 	INIT_LIST_HEAD(&(ts->children));
+	ts->parent = ts;
 
 	/* Initilaize idle_task variable */
 	idle_task = ts;
@@ -129,6 +130,7 @@ void init_task1(void)
 
 	/* Initialize children list */
 	INIT_LIST_HEAD(&(ts->children));
+	ts->parent = ts;
 }
 
 void init_sched()

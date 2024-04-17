@@ -178,8 +178,9 @@ void sys_exit()
 
   // Inherit childs to idle process
   struct list_head *children = &(current()->children);
+
   if(!list_empty(children)){
-    struct list_head *child = list_first(children);
+    struct list_head *child;
     list_for_each(child, children){
       list_del(child);
       list_add(child, &(idle_task->children));
