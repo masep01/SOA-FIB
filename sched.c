@@ -75,6 +75,9 @@ void init_idle (void)
 	/* Set PID = 0 */
 	ts->PID = 0;
 
+	/* Change state to READY*/
+	ts->state = ST_READY;
+
 	/* Set quantum */
 	set_quantum(ts, DEFAULT_QUANTUM);
 
@@ -107,6 +110,9 @@ void init_task1(void)
 	/* Set PID = 1 */
 	ts->PID = 1;
 
+	/* Change state to RUNNING*/
+	ts->state = ST_RUN;
+	
 	/* Set quantum */
 	set_quantum(ts, DEFAULT_QUANTUM);
 	quantum_left = ts->quantum;
@@ -163,11 +169,14 @@ void inner_task_switch(union task_union *new){
 	/* 2) Change user space address space */
 	set_cr3(get_DIR(&(new->task)));
 	
-	/* Call Assembler part */
-	//inner_task_switch_as(current()->kernel_esp, new->task.kernel_esp);
+	/* 3) Save current state by saving %EBP in its kernel_esp */
 	current()->kernel_esp = (unsigned long *) getEbp();
 
+	/* 4) Make %esp point to the new kernel stack */
 	setEsp(new->task.kernel_esp);
+
+	/* 5) Update new process state */
+	new->task.state = ST_RUN;
 }
 
 int get_quantum(struct task_struct *t)
@@ -196,26 +205,15 @@ int needs_sched_rr (void){
 
 void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue){
 	
-	/*
-	 *  If process is not Running, then we delete it from its queue.
-	 *	If it is Running, then it is not in any queue.
-	*/
-	if(t->state != ST_RUN) {
-		printk("Antes");
-		list_del(&(t->anchor));
-		printk("Despues");
-	}
+	/* If the anchor is valid, delete it from its list */
+	if(!(t->anchor.next == NULL && t->anchor.prev == NULL)) list_del(&(t->anchor));
 	
-	/*
-	 *  If dest queue is not NULL (not RUNNING), means that the new state is READY or BLOCKED
-	 *	We change the state by checking which Queue is the dest queue, and add process to it if needed.
-	*/
+	/* If the destination queue is valid, change t to the new queue and update its state */
 	if(dst_queue != NULL){
 		if(dst_queue == &readyQueue) t->state = ST_READY;
 		else t->state = ST_BLOCKED;
 		list_add_tail(&(t->anchor), dst_queue);
-
-	} else t->state = ST_RUN;
+	}
 }
 
 void sched_next_rr (void){
