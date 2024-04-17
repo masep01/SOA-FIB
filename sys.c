@@ -140,6 +140,8 @@ int sys_fork()
 
   // 5) Assign PID
   child_pcb->task.PID = ++global_PID;
+
+  // 5.1) Set state to READY
 	child_pcb->task.state = ST_READY;
 
   // 6) Prepare child to task_switch call

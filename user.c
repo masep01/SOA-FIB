@@ -84,6 +84,6 @@ int __attribute__ ((__section__(".text.main")))
       while(1) write(1, "\nSigo en hijo.\n", sizeof("\nSigo en hijo.\n"));
     }
 
-    // Fails when both father and son are alive and they are switching always. Eventually we recieve a PAGEFAULT.
+
   while(1) { }
 }
