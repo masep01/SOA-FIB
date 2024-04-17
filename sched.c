@@ -206,7 +206,7 @@ void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue
 	 *  If process is not Running, then we delete it from its queue.
 	 *	If it is Running, then it is not in any queue.
 	*/
-	if(t->state != ST_RUN) list_del(&t->anchor);
+	if(t->state != ST_RUN) list_del(&(t->anchor));
 
 	/*
 	 *  If dest queue is not NULL (not RUNNING), means that the new state is READY or BLOCKED
