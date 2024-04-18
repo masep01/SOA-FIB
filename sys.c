@@ -249,7 +249,9 @@ int sys_gettime(){
 
 void sys_block(){
   if(current()->pending_unblocks == 0){
-    update_process_state_rr(current(), &blocked);
+    current()->state = ST_BLOCKED;
+    list_del(&(current()->anchor));
+    list_add_tail(&(current()->anchor), &blocked);
     schedule();
     
   } else current()->pending_unblocks -= 1;
@@ -271,8 +273,9 @@ int sys_unblock(int pid){
       if(child_ts->PID == pid){
 
         if(child_ts->state == ST_BLOCKED){
-          update_process_state_rr(child_ts, &readyQueue);
-
+          list_del(&(child_ts->anchor));
+          child_ts->state = ST_BLOCKED;
+          list_add_tail(&(child_ts->anchor), &readyQueue);
         } else {
           /* Otherwise increase pending unblocks */
           child_ts->pending_unblocks += 1;

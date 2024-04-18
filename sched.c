@@ -208,6 +208,7 @@ int needs_sched_rr (void){
 }
 
 void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue){
+	if(t->state == ST_BLOCKED) return;
 	
 	/* If the anchor is valid, delete it from its list */
 	if(!(t->anchor.next == NULL && t->anchor.prev == NULL)) list_del(&(t->anchor));
