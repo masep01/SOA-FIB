@@ -93,7 +93,7 @@ void init_idle (void)
 
 	/* Initialize children list */
 	INIT_LIST_HEAD(&(ts->children));
-	ts->parent = ts;
+	//ts->parent = ts;
 	ts->pending_unblocks = 0;
 
 	/* Initilaize idle_task variable */
@@ -133,7 +133,7 @@ void init_task1(void)
 
 	/* Initialize children list and parent pointer */
 	INIT_LIST_HEAD(&(ts->children));
-	ts->parent = ts;
+	//ts->parent = ts;
 	ts->pending_unblocks = 0;
 }
 
@@ -178,9 +178,6 @@ void inner_task_switch(union task_union *new){
 
 	/* 4) Make %esp point to the new kernel stack */
 	setEsp(new->task.kernel_esp);
-
-	/* 5) Update new process state */
-	new->task.state = ST_RUN;
 }
 
 int get_quantum(struct task_struct *t)
@@ -198,6 +195,8 @@ void update_sched_data_rr (void){
 }
 
 int needs_sched_rr (void){
+	if(current()->state == ST_BLOCKED) return 1;
+
 	if(quantum_left > 0 ) return 0;
 
 	if(list_empty(&readyQueue)){
@@ -208,16 +207,24 @@ int needs_sched_rr (void){
 }
 
 void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue){
-	if(t->state == ST_BLOCKED) return;
 	
-	/* If the anchor is valid, delete it from its list */
-	if(!(t->anchor.next == NULL && t->anchor.prev == NULL)) list_del(&(t->anchor));
+	// /* If the anchor is valid, delete it from its list */
+	// if(!(t->anchor.next == NULL && t->anchor.prev == NULL)) list_del(&(t->anchor));
 	
-	/* If the destination queue is valid, change t to the new queue and update its state */
-	if(dst_queue != NULL){
-		if(dst_queue == &readyQueue) t->state = ST_READY;
-		else t->state = ST_BLOCKED;
-		list_add_tail(&(t->anchor), dst_queue);
+	// /* If the destination queue is valid, change t to the new queue and update its state */
+	// if(dst_queue != NULL){
+	// 	if(dst_queue == &readyQueue) t->state = ST_READY;
+	// 	else t->state = ST_BLOCKED;
+	// 	list_add_tail(&(t->anchor), dst_queue);
+	// }
+
+
+	if(t->state == ST_RUN){
+		t->state = ST_READY;
+		list_add_tail(&(t->anchor), &dst_queue);
+	} else if(t->state == ST_READY){
+		t->state = ST_RUN;
+		list_del(&(t->anchor));
 	}
 }
 
@@ -229,6 +236,7 @@ void sched_next_rr (void){
 		struct list_head *lh = list_first(&readyQueue);
 		list_del(lh);
 		next = list_head_to_task_struct(lh);
+		update_process_state_rr(next, NULL);
 	}
 	
 	/* Update the new quantum and call task_switch */

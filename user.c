@@ -69,32 +69,21 @@ int __attribute__ ((__section__(".text.main")))
     //test_getpid();
 
     int pid = fork();
-    itoa(pid, buff);
+    //itoa(pid, buff);
     
-    if(pid > 0){
-      //test_getpid();
-      //exit();
-      //while(1) write(1, "\nSigo en padre.\n", sizeof("\nSigo en padre.\n"));
-
-    } else {
-      test_getpid();
-      block();
-      test_getpid();
+    if(pid == 0) {
+      write(1,"\n Entro hijo", sizeof("\n Entro hijo"));
+      //block();
+      write(1,"\n Soy hijo", sizeof("\n Soy hijo"));
       
-      //exit();
-      //while(1) write(1, "\nSigo en hijo.\n", sizeof("\nSigo en hijo.\n"));
     }
-
-    if(pid > 0){
-      test_gettime();
-      while(gettime() < 200){}
-
-      int res = unblock(pid);
-      itoa(res, buff);
-      //write(1, buff, sizeof(buff));
+    else {
+      write(1,"\n Entro padre", sizeof("\n Entro padre"));
+      while(gettime() < 500);
+      //unblock(pid);
+      write(1,"\n Soy padre", sizeof("\n Soy padre"));
     }
-
-    test_getpid();
+  
 
   while(1) { }
 }
