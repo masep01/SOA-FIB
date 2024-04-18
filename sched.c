@@ -178,9 +178,6 @@ void inner_task_switch(union task_union *new){
 
 	/* 4) Make %esp point to the new kernel stack */
 	setEsp(new->task.kernel_esp);
-
-	/* 5) Update new process state */
-	new->task.state = ST_RUN;
 }
 
 int get_quantum(struct task_struct *t)
@@ -198,26 +195,26 @@ void update_sched_data_rr (void){
 }
 
 int needs_sched_rr (void){
-	if(quantum_left > 0 ) return 0;
+	
+	
+	if((quantum_left == 0) && (!list_empty(&readyQueue))) return 1;
 
-	if(list_empty(&readyQueue)){
-		quantum_left = get_quantum(current());
-		return 0;
-
-	} else return 1;
+	if(quantum_left == 0) quantum_left = get_quantum(current());
+	return 0;
 }
 
 void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue){
-	
-	/* If the anchor is valid, delete it from its list */
-	if(!(t->anchor.next == NULL && t->anchor.prev == NULL)) list_del(&(t->anchor));
+
+	/* If the process is not running, delete it from its list */
+	if(t->state != ST_RUN) list_del(&(t->anchor));
 	
 	/* If the destination queue is valid, change t to the new queue and update its state */
 	if(dst_queue != NULL){
 		if(dst_queue == &readyQueue) t->state = ST_READY;
 		else t->state = ST_BLOCKED;
 		list_add_tail(&(t->anchor), dst_queue);
-	}
+		
+	} else t->state = ST_RUN;
 }
 
 void sched_next_rr (void){
@@ -229,8 +226,8 @@ void sched_next_rr (void){
 		list_del(lh);
 		next = list_head_to_task_struct(lh);
 	}
-	
-	/* Update the new quantum and call task_switch */
+
+	next->state = ST_RUN;
 	quantum_left = get_quantum(next);
 	task_switch((union task_union*)next);
 }
