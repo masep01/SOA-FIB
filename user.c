@@ -72,17 +72,45 @@ int __attribute__ ((__section__(".text.main")))
     itoa(pid, buff);
     
     if(pid > 0){
-      //test_getpid();
-      while(1) test_getpid();
-      //exit();
+      test_getpid();
+      //while(1) test_getpid();
+      write(1, "Empiezo espera\n", strlen("Empiezo espera\n"));
+      while(gettime() < 1000){
+
+      }
+      write(1, "Acabo espera\n", strlen("Acabo espera\n"));
+      unblock(pid);
+
+      //Test for schedule
+
+      while(gettime() < 2000){
+        test_getpid();
+      }
+
+      exit();
 
     } else {
-      //test_getpid();
-      while(1) test_getpid();
-      //exit();
-    }
+      //Test for block
+      write(1, "Antes de block\n", strlen("Antes de block\n"));
+      block();
+      write(1, "Despues de block\n", strlen("Despues de block\n"));
 
-    test_getpid();
+      //Test for schedule
+
+      while(gettime() < 2100){
+        test_getpid();
+      }
+
+      //Fork anidado test
+      int pid2 = fork();
+      if(pid2 > 0){
+        test_getpid();
+      }
+      else{
+        test_getpid();
+      }
+      exit();
+    }
 
   while(1) { }
 }
