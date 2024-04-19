@@ -109,7 +109,6 @@ int __attribute__ ((__section__(".text.main")))
       else{
         test_getpid();
       }
-
       exit();
     }
 

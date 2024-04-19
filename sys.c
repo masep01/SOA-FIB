@@ -251,8 +251,7 @@ void sys_block(){
   if(current()->pending_unblocks == 0){
     current()->state = ST_BLOCKED;
     list_add_tail(&(current()->anchor), &blocked);
-    sched_next_rr();
-    
+    sched_next_rr();   
   } else current()->pending_unblocks -= 1;
 }
 
