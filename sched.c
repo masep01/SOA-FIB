@@ -93,7 +93,7 @@ void init_idle (void)
 
 	/* Initialize children list */
 	INIT_LIST_HEAD(&(ts->children));
-	//ts->parent = ts;
+	ts->parent = ts;
 	ts->pending_unblocks = 0;
 
 	/* Initilaize idle_task variable */
@@ -133,7 +133,7 @@ void init_task1(void)
 
 	/* Initialize children list and parent pointer */
 	INIT_LIST_HEAD(&(ts->children));
-	//ts->parent = ts;
+	ts->parent = ts;
 	ts->pending_unblocks = 0;
 }
 
@@ -195,37 +195,26 @@ void update_sched_data_rr (void){
 }
 
 int needs_sched_rr (void){
-	if(current()->state == ST_BLOCKED) return 1;
+	
+	
+	if((quantum_left == 0) && (!list_empty(&readyQueue))) return 1;
 
-	if(quantum_left > 0 ) return 0;
-
-	if(list_empty(&readyQueue)){
-		quantum_left = get_quantum(current());
-		return 0;
-
-	} else return 1;
+	if(quantum_left == 0) quantum_left = get_quantum(current());
+	return 0;
 }
 
 void update_process_state_rr (struct task_struct *t, struct list_head *dst_queue){
-	
-	// /* If the anchor is valid, delete it from its list */
-	// if(!(t->anchor.next == NULL && t->anchor.prev == NULL)) list_del(&(t->anchor));
-	
-	// /* If the destination queue is valid, change t to the new queue and update its state */
-	// if(dst_queue != NULL){
-	// 	if(dst_queue == &readyQueue) t->state = ST_READY;
-	// 	else t->state = ST_BLOCKED;
-	// 	list_add_tail(&(t->anchor), dst_queue);
-	// }
 
-
-	if(t->state == ST_RUN){
-		t->state = ST_READY;
-		list_add_tail(&(t->anchor), &dst_queue);
-	} else if(t->state == ST_READY){
-		t->state = ST_RUN;
-		list_del(&(t->anchor));
-	}
+	/* If the process is not running, delete it from its list */
+	if(t->state != ST_RUN) list_del(&(t->anchor));
+	
+	/* If the destination queue is valid, change t to the new queue and update its state */
+	if(dst_queue != NULL){
+		if(dst_queue == &readyQueue) t->state = ST_READY;
+		else t->state = ST_BLOCKED;
+		list_add_tail(&(t->anchor), dst_queue);
+		
+	} else t->state = ST_RUN;
 }
 
 void sched_next_rr (void){
@@ -236,10 +225,9 @@ void sched_next_rr (void){
 		struct list_head *lh = list_first(&readyQueue);
 		list_del(lh);
 		next = list_head_to_task_struct(lh);
-		update_process_state_rr(next, NULL);
 	}
-	
-	/* Update the new quantum and call task_switch */
+
+	next->state = ST_RUN;
 	quantum_left = get_quantum(next);
 	task_switch((union task_union*)next);
 }

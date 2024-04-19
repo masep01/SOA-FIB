@@ -248,13 +248,11 @@ int sys_gettime(){
 }
 
 void sys_block(){
-
   if(current()->pending_unblocks == 0){
     current()->state = ST_BLOCKED;
-    //list_del(&(current()->anchor));
     list_add_tail(&(current()->anchor), &blocked);
-    schedule();
-  
+    sched_next_rr();
+    
   } else current()->pending_unblocks -= 1;
 }
 
@@ -265,25 +263,26 @@ int sys_unblock(int pid){
       - Process with {pid} is blocked
   */
   struct list_head *children = &(current()->children);
-  
+  if(!list_empty(children)){
     struct list_head *child;
+    struct lsit_head *tmp;
     
-  list_for_each(child, children){
-    struct task_struct *child_ts = list_head_to_task_struct(child);
+    list_for_each_safe(child, tmp, children){
+      struct task_struct *child_ts = list_head_to_task_struct(child);
 
-    if(child_ts->PID == pid){
+      if(child_ts->PID == pid){
 
-      if(child_ts->state == ST_BLOCKED){
-        child_ts->state = ST_READY;
-        list_del(&(child_ts->anchor));
-        list_add_tail(&(child_ts->anchor), &readyQueue);
-      } else {
-        /* Otherwise increase pending unblocks */
-        child_ts->pending_unblocks += 1;
+        if(child_ts->state == ST_BLOCKED){
+          list_del(&(child_ts->anchor));
+          child_ts->state = ST_READY;
+          list_add_tail(&(child_ts->anchor), &readyQueue);
+        } else {
+          /* Otherwise increase pending unblocks */
+          child_ts->pending_unblocks += 1;
+        }
+        return 0;
       }
-      return 0;
     }
-  }
-  
+  } 
   return -1; // Empty queue
 }
