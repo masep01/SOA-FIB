@@ -35,8 +35,8 @@ char char_map[] =
 
 int zeos_ticks = 0;
 
-#define KB_BUFFER_SIZE 2048
-struct circ_buffer* KEYBOARD_BUFFER;
+struct circ_buffer KEYBOARD_BUFFER;
+struct circ_buffer *pBuffer = &(KEYBOARD_BUFFER);
 
 void clock_routine()
 {
@@ -50,13 +50,15 @@ void keyboard_routine()
 {
   unsigned char c = inb(0x60);
   
-  if (c&0x80) printc_xy(0, 0, char_map[c&0x7f]);
-
+  //if (c&0x80) printc_xy(0, 0, char_map[c&0x7f]);
+  
   /* Keyboard management */
-  if(KEYBOARD_BUFFER == NULL) INIT_CIRC_BUFFER(KEYBOARD_BUFFER, KB_BUFFER_SIZE);
   if(c&0x80){
-    push_circ_buffer(KEYBOARD_BUFFER, c&0x7f);
-    printc(char_map[KEYBOARD_BUFFER->buffer[KEYBOARD_BUFFER->head]]);
+    //printc(char_map[c&0x7f]);
+    push_circ_buffer(pBuffer, c&0x7f);
+    char c = 'a';
+    pop_circ_buffer(pBuffer, &c);
+    printc(char_map[c]);
   }
 
 }
@@ -133,5 +135,7 @@ void setIdt()
   setSysenter();
 
   set_idt_reg(&idtR);
+
+  init_circ_buffer(pBuffer);
 }
 

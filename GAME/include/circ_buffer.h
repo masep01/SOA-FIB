@@ -1,21 +1,20 @@
 #ifndef _LINUX_CIRC_BUFFER_H
 #define _LINUX_CIRC_BUFFER_H
 
-struct circ_buffer{
-    char * const buffer;
-    const int maxlen;
+#define MAXLEN_BUFFER 1024
+
+typedef struct circ_buffer{
+    char buffer[MAXLEN_BUFFER];
     int head;
     int tail;
-};
+} circ_buffer;
 
-#define INIT_CIRC_BUFFER(b, len) \
-    char * tmp[len];             \
-    circ_buffer b = {            \
-        .buffer = tmp,           \
-        .head = 0,               \
-        .tail = 0,               \
-        .maxlen = len            \
-    }
+/* 
+    Function: Initializes buffer [b]
+    Returns:
+        -
+*/
+void init_circ_buffer(struct circ_buffer *b);
 
 /* 
     Function: Pushes [data] in buffer [b]
