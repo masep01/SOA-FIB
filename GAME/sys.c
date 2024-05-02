@@ -17,10 +17,14 @@
 
 #include <errno.h>
 
+#include <circ_buffer.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
 void * get_ebp();
+
+extern struct circ_buffer *pBuffer;
 
 int check_fd(int fd, int permissions)
 {
@@ -235,4 +239,17 @@ int sys_get_stats(int pid, struct stats *st)
     }
   }
   return -ESRCH; /*ESRCH */
+}
+
+/* GAME STUFF */
+int sys_read(char* b, int maxchars){
+  int readed_chars = 0;
+  int empty = 0;
+  while(readed_chars < maxchars && !empty){
+    empty = pop_circ_buffer(pBuffer, b[readed_chars]);
+    ++readed_chars;
+  }
+  
+  return readed_chars;
+
 }
