@@ -20,8 +20,9 @@ int __attribute__ ((__section__(".text.main")))
   while(gettime() < 2000){}
   write(1, "\nDespues de la espera.\n", sizeof("\nDespues de la espera.\n"));
 
-  int bytes = read(buff, 2);
+  int bytes = read(buff, 6);
   itoa(bytes, buff2);
+  write(1, "He leido: ", sizeof("He leido: "));
   write(1, buff2, sizeof(buff2));
   write(1, "\nDespues del read.\n", sizeof("\nDespues del read.\n"));
 

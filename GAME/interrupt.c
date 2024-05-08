@@ -54,11 +54,11 @@ void keyboard_routine()
   
   /* Keyboard management */
   if(c&0x80){
-    //printc(char_map[c&0x7f]);
     push_circ_buffer(pBuffer, c&0x7f);
-    //char c = 'a';
-    //pop_circ_buffer(pBuffer, &c);
-    //printc(char_map[c]);
+    
+    //char temp = 'a';
+    //pop_circ_buffer(pBuffer, &temp);
+    //printc(char_map[temp]);
   }
 
 }

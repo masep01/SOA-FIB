@@ -248,16 +248,17 @@ int sys_read(char* b, int maxchars){
   if(maxchars < 0) return -EINVAL;
   if(!access_ok(VERIFY_READ, b, maxchars)) return -EINVAL;
   
-  int readed_chars = 0;
-  int empty = 0;
-  char tempBuff[256];
-  while((readed_chars < maxchars) && !empty){
-    empty = pop_circ_buffer(pBuffer, tempBuff);
-    if(!empty) {
-      copy_to_user(&tempBuff[readed_chars], &b[readed_chars], sizeof(char));
-      ++readed_chars;
+  int i = 0;
+  int bStatus = 0;
+  char temp;
+
+  while((i < maxchars) && (bStatus != -1)){
+    bStatus = pop_circ_buffer(pBuffer, &temp);
+    if(bStatus != -1) {
+      copy_to_user(&temp, &b[i], sizeof(temp));
+      ++i;
     }
   }
   
-  return readed_chars;
+  return i;
 }
