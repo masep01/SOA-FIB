@@ -56,9 +56,9 @@ void keyboard_routine()
   if(c&0x80){
     //printc(char_map[c&0x7f]);
     push_circ_buffer(pBuffer, c&0x7f);
-    char c = 'a';
-    pop_circ_buffer(pBuffer, &c);
-    printc(char_map[c]);
+    //char c = 'a';
+    //pop_circ_buffer(pBuffer, &c);
+    //printc(char_map[c]);
   }
 
 }

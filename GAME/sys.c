@@ -243,13 +243,21 @@ int sys_get_stats(int pid, struct stats *st)
 
 /* GAME STUFF */
 int sys_read(char* b, int maxchars){
+
+  if(b == NULL) return -EINVAL;
+  if(maxchars < 0) return -EINVAL;
+  if(!access_ok(VERIFY_READ, b, maxchars)) return -EINVAL;
+  
   int readed_chars = 0;
   int empty = 0;
-  while(readed_chars < maxchars && !empty){
-    empty = pop_circ_buffer(pBuffer, b[readed_chars]);
-    ++readed_chars;
+  char tempBuff[256];
+  while((readed_chars < maxchars) && !empty){
+    empty = pop_circ_buffer(pBuffer, tempBuff);
+    if(!empty) {
+      copy_to_user(&tempBuff[readed_chars], &b[readed_chars], sizeof(char));
+      ++readed_chars;
+    }
   }
   
   return readed_chars;
-
 }

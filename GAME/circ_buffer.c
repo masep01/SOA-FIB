@@ -1,6 +1,6 @@
 #include <circ_buffer.h>
 
-void init_buffer(struct circ_buffer *buff){
+void init_circ_buffer(struct circ_buffer *buff){
     for(int i = 0; i < MAXLEN_BUFFER; ++i)
         buff->buffer[0] = 0;
     
