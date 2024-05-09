@@ -10,6 +10,9 @@
 
 Byte phys_mem[TOTAL_PAGES];
 
+struct shared_page shared_mem[SH_PAGES];
+struct shared_page *pShared_mem = &(shared_mem);
+
 /* SEGMENTATION */
 /* Memory segements description table */
 Descriptor  *gdt = (Descriptor *) GDT_START;
@@ -139,7 +142,15 @@ void init_mm()
   allocate_DIR(&task[0].task);
   set_cr3(get_DIR(&task[0].task));
   set_pe_flag();
+
+  /* SHARED MEMORY */
+  for(int i=0; i<SH_PAGES;++i) {
+    shared_mem[i].addr = alloc_frame();
+    shared_mem[i].refs = 0;
+  }
+
 }
+
 /***********************************************/
 /************** SEGMENTATION MANAGEMENT ********/
 /***********************************************/
@@ -266,3 +277,4 @@ void del_ss_pag(page_table_entry *PT, unsigned logical_page)
 unsigned int get_frame (page_table_entry *PT, unsigned int logical_page){
      return PT[logical_page].bits.pbase_addr; 
 }
+

@@ -21,6 +21,8 @@
 
 #include <io.h>
 
+#include <sched.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
@@ -29,6 +31,7 @@ void * get_ebp();
 extern struct circ_buffer *pBuffer;
 
 extern Byte x, y, color;
+extern struct shared_page *pShared_mem;
 
 int check_fd(int fd, int permissions)
 {
@@ -267,6 +270,7 @@ int sys_read(char* b, int maxchars){
   return i;
 }
 
+/* MILESTONE 3 */
 int sys_gotoxy(int dest_x, int dest_y){
   if (dest_x < 0 || dest_x >= NUM_COLUMNS) return -EINVAL;
   if (dest_y < 0 || dest_y >= NUM_ROWS)    return -EINVAL;
@@ -285,4 +289,26 @@ int sys_set_color(int fg, int bg){
   color = 0 | bg << 4 | fg;
 
   return 0;
+}
+
+/* MILESTONE 4 */
+void* sys_shmat(int id, void* addr){
+
+  if(!((int)(addr) & 0xfffff000)) return -EINVAL;
+  page_table_entry *PT = get_PT(current());
+
+  if(addr == NULL){ 
+    int i = 0;
+    while(i<NR_TASKS){
+      if(!PT[i].bits.present){
+        addr = i;
+        break;
+      }
+      ++i;   
+    }  
+  }
+
+  (pShared_mem)[id].refs += 1;
+  set_ss_pag(PT, addr, (pShared_mem)[id].addr);
+
 }

@@ -138,9 +138,25 @@ ENTRY(set_color)
 	movl %esp, %ebp
 
 	pushl %ebx;  				// Save EBX, ESI and EDI if modified
-	movl $6, %eax				// Syscall number: 5
+	movl $6, %eax				// Syscall number: 6
 	movl 0x8(%ebp), %ebx;		// int fg
 	movl 0xC(%ebp), %ecx;		// int bg
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+ENTRY(shmat)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $7, %eax				// Syscall number: 7
+	movl 0x8(%ebp), %ebx;		// int id
+	movl 0xC(%ebp), %ecx;		// void* addr
 	call syscall_sysenter
 
 	popl %ebx
