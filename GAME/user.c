@@ -4,10 +4,6 @@ char buff[24];
 
 int pid;
 
-void my_print(char string[]){
-  write(1, string, sizeof(string));
-}
-
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
@@ -20,6 +16,9 @@ int __attribute__ ((__section__(".text.main")))
   while(gettime() < 2000){}
 
   int bytes = read(buff, 20);
+  gotoxy(40,12);
+  set_color(0x50, 0x50);
   write(1, buff, sizeof(buff));
+
   while(1) { }
 }

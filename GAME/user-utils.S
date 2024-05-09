@@ -116,3 +116,35 @@ ENTRY(read)
 	js nok						// if (eax < 0) -> 
 	popl %ebp
 	ret
+
+ENTRY(gotoxy)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $5, %eax				// Syscall number: 5
+	movl 0x8(%ebp), %ebx;		// int x
+	movl 0xC(%ebp), %ecx;		// int y
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+ENTRY(set_color)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $6, %eax				// Syscall number: 5
+	movl 0x8(%ebp), %ebx;		// int fg
+	movl 0xC(%ebp), %ecx;		// int bg
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret

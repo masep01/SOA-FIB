@@ -19,12 +19,16 @@
 
 #include <circ_buffer.h>
 
+#include <io.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
 void * get_ebp();
 
 extern struct circ_buffer *pBuffer;
+
+extern Byte x, y, color;
 
 int check_fd(int fd, int permissions)
 {
@@ -261,4 +265,25 @@ int sys_read(char* b, int maxchars){
   }
   
   return i;
+}
+
+int sys_gotoxy(int dest_x, int dest_y)
+{
+  if (dest_x < 0 || dest_x >= NUM_COLUMNS) return -EINVAL;
+  if (dest_y < 0 || dest_y >= NUM_ROWS)    return -EINVAL;
+
+  x = dest_x;
+  y = dest_y;
+
+  return 0;
+}
+
+int sys_set_color(int fg, int bg){
+
+  if (fg < 0 || fg > 15) return -EINVAL;
+  if (bg < 0 || bg >  7) return -EINVAL;
+
+  color = 0 | bg << 4 | fg;
+
+  return 0;
 }
