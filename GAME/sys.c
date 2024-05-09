@@ -254,12 +254,12 @@ int sys_read(char* b, int maxchars){
   
   int i = 0;
   int bStatus = 0;
-  char temp;
+  char c;
 
   while((i < maxchars) && (bStatus != -1)){
-    bStatus = pop_circ_buffer(pBuffer, &temp);
+    bStatus = pop_circ_buffer(pBuffer, &c);
     if(bStatus != -1) {
-      copy_to_user(&temp, &b[i], sizeof(temp));
+      copy_to_user(&c, &b[i], sizeof(c));
       ++i;
     }
   }
@@ -267,8 +267,7 @@ int sys_read(char* b, int maxchars){
   return i;
 }
 
-int sys_gotoxy(int dest_x, int dest_y)
-{
+int sys_gotoxy(int dest_x, int dest_y){
   if (dest_x < 0 || dest_x >= NUM_COLUMNS) return -EINVAL;
   if (dest_y < 0 || dest_y >= NUM_ROWS)    return -EINVAL;
 

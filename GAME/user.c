@@ -13,11 +13,11 @@ int __attribute__ ((__section__(".text.main")))
   char buff2[256];
   write(1, "\nTienes 2000 tics para escribir algo:\n", sizeof("\nTienes 2000 tics para escribir algo:\n"));
   write(1, "\nLeyendo teclas...\n", sizeof("\nLeyendo teclas...\n"));
-  while(gettime() < 2000){}
+  while(gettime() < 3000){}
 
-  int bytes = read(buff, 20);
-  gotoxy(40,12);
-  set_color(0x50, 0x50);
+  int bytes = read(buff, 5);
+  gotoxy(35,12);
+  set_color(0x4, 0x0);
   write(1, buff, sizeof(buff));
 
   while(1) { }
