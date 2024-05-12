@@ -15,8 +15,9 @@
 
 #define SH_PAGES 10
 typedef struct shared_page{
-    int addr;
+    int frameId;
     int refs;
+    int marked;
 };
 
 /* Bytemap to mark the free physical pages */

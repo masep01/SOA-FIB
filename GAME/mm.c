@@ -145,7 +145,7 @@ void init_mm()
 
   /* SHARED MEMORY */
   for(int i=0; i<SH_PAGES;++i) {
-    shared_mem[i].addr = alloc_frame();
+    shared_mem[i].frameId = alloc_frame();
     shared_mem[i].refs = 0;
   }
 
