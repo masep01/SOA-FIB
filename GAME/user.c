@@ -22,13 +22,12 @@ int __attribute__ ((__section__(".text.main")))
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
-  shmat(1, 0x1000);
   int pid = fork();
   if(pid == 0){
     exit();
   } else {
-    shmrm(0x1000);
+    
   }
-  shmrm(2);
+  
   while(1) { }
 }

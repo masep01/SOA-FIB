@@ -345,25 +345,45 @@ int sys_set_color(int fg, int bg){
 |    - acces_ok: check new shared memory regions.     |
 -------------------------------------------------------
 */
+
+/* Find a free LOGICAL page */
+unsigned int find_free_page(){
+  page_table_entry *PT = get_PT(current());
+  int pag = NUM_PAG_CODE+NUM_PAG_DATA+NUM_PAG_KERNEL;
+  int found = 0;
+  while(pag<TOTAL_PAGES && !found){
+    if(!PT[pag].bits.present){
+      found = 1;
+
+    } else ++pag;   
+  } 
+
+  if(!found) return -ENOMEM;
+  return pag;
+}
+
 void *sys_shmat(int id, void* addr){
 
   if(!((int)(addr) & 0xfffff000)) return -EINVAL;
+  if(id<0 || id>9) return -EINVAL;
+
+  unsigned long pag = (unsigned long)addr>>12;
+  if(pag > TOTAL_PAGES) return -EINVAL;
+
   page_table_entry *PT = get_PT(current());
+  int free_addr = addr;
+  
+  /* If addr is null or it's not free, we must find a free addr */
+  if((addr == NULL) || get_frame(PT, pag)!=0){
+    unsigned int free_page = find_free_page();
+    if(free_page == -ENOMEM) return -ENOMEM;
+    free_addr = free_page<<12;
 
-  if(addr == NULL){ 
-    int i = 0;
-    while(i<NR_TASKS){
-      if(!PT[i].bits.present){
-        addr = i;
-        break;
-      }
-      ++i;   
-    }  
-  }
-
+  } // If it's free, all correct!
+  
   (pShared_mem)[id].refs += 1;
-  set_ss_pag(PT, (void*)(addr), (pShared_mem)[id].frameId);
-  return addr;
+  set_ss_pag(PT, (void*)(free_addr), (pShared_mem)[id].frameId);
+  return (void *)free_addr;
 }
 
 int sys_shmdt(void *addr){
