@@ -2,6 +2,7 @@
 #include <types.h>
 
 #include <mm_address.h>
+#include <mm.h>
 
 void copy_data(void *start, void *dest, int size)
 {
@@ -53,6 +54,23 @@ int copy_to_user(void *start, void *dest, int size)
   return 0;
 }
 
+extern struct shared_page *pShared_mem;
+
+int shared_mem_ok(unsigned long addr_ini, unsigned long addr_fin){
+  page_table_entry *PT = get_PT(current());
+  int total_pages = (addr_fin-addr_ini+1);
+  int pages_ok = 0;
+  
+  for(int i=0; i<total_pages;++i){
+    int frame = get_frame(PT, addr_ini+i);
+    for(int j=0; j<SH_PAGES; ++j){
+      if((pShared_mem[j].frameId == frame)) ++pages_ok;
+    }
+  }
+  
+  return pages_ok==total_pages;
+}
+
 /* access_ok: Checks if a user space pointer is valid
  * @type:  Type of access: %VERIFY_READ or %VERIFY_WRITE. Note that
  *         %VERIFY_WRITE is a superset of %VERIFY_READ: if it is safe
@@ -82,6 +100,10 @@ int access_ok(int type, const void * addr, unsigned long size)
   	(addr_fin<=(USER_FIRST_PAGE+NUM_PAG_CODE+NUM_PAG_DATA)))
           return 1;
   }
+
+  /* Shared memory checking */
+  if(!shared_mem_ok(addr_ini,addr_fin)) return 1;
+
   return 0;
 }
 

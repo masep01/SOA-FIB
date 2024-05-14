@@ -100,3 +100,97 @@ ENTRY(get_stats)
 	popl %ebp
 	ret
 
+/* GAME STUFF */
+ENTRY(read)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $0, %eax				// Syscall number: 0
+	movl 0x8(%ebp), %ebx;		//char* b
+	movl 0xC(%ebp), %ecx;		//int maxchars
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+ENTRY(gotoxy)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $5, %eax				// Syscall number: 5
+	movl 0x8(%ebp), %ebx;		// int x
+	movl 0xC(%ebp), %ecx;		// int y
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+ENTRY(set_color)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $6, %eax				// Syscall number: 6
+	movl 0x8(%ebp), %ebx;		// int fg
+	movl 0xC(%ebp), %ecx;		// int bg
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+ENTRY(shmat)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $7, %eax				// Syscall number: 7
+	movl 0x8(%ebp), %ebx;		// int id
+	movl 0xC(%ebp), %ecx;		// void* addr
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+ENTRY(shmdt)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $8, %eax				// Syscall number: 8
+	movl 0x8(%ebp), %ebx;		// void* addr
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret
+
+ENTRY(shmrm)
+	pushl %ebp
+	movl %esp, %ebp
+
+	pushl %ebx;  				// Save EBX, ESI and EDI if modified
+	movl $9, %eax				// Syscall number: 9
+	movl 0x8(%ebp), %ebx;		// int id
+	call syscall_sysenter
+
+	popl %ebx
+	test %eax, %eax
+	js nok						// if (eax < 0) -> 
+	popl %ebp
+	ret

@@ -17,10 +17,21 @@
 
 #include <errno.h>
 
+#include <circ_buffer.h>
+
+#include <io.h>
+
+#include <sched.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
 void * get_ebp();
+
+extern struct circ_buffer *pBuffer;
+
+extern Byte x, y, color;
+extern struct shared_page *pShared_mem;
 
 int check_fd(int fd, int permissions)
 {
@@ -54,6 +65,23 @@ int global_PID=1000;
 int ret_from_fork()
 {
   return 0;
+}
+
+void inherit_shared_mem(union task_union *uchild){
+  page_table_entry *parent_PT = get_PT(current());
+  page_table_entry *child_PT = get_PT(&uchild->task);
+
+  for(int pg = NUM_PAG_KERNEL+NUM_PAG_CODE+NUM_PAG_DATA; pg<TOTAL_PAGES;++pg){    // Search in parent's PT for shared pages
+    int shared = get_frame(parent_PT, pg);                                        //
+    if(shared!=0){                                                                //
+      for(int i=0; i<SH_PAGES; ++i){                                              // Search in shared_mem vector for a match
+        if((pShared_mem)[i].frameId == shared){                                   //
+          (pShared_mem)[i].refs += 1;                                             //
+          set_ss_pag(child_PT, (void*)(pg), get_frame(parent_PT, pg));            // Link to child's PT
+        }
+      }
+    }
+  }
 }
 
 int sys_fork(void)
@@ -120,6 +148,11 @@ int sys_fork(void)
     copy_data((void*)(pag<<12), (void*)((pag+NUM_PAG_DATA)<<12), PAGE_SIZE);
     del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
   }
+
+  /* -------MILESTONE 4-5 ------ */
+  inherit_shared_mem(uchild);
+  /* --------------------------- */
+
   /* Deny access to the child's memory space */
   set_cr3(get_DIR(current()));
 
@@ -187,6 +220,25 @@ int sys_gettime()
   return zeos_ticks;
 }
 
+void dettach_shared_mem(){
+  page_table_entry *PT = get_PT(current());
+  for(int pg = NUM_PAG_KERNEL+NUM_PAG_CODE+NUM_PAG_DATA; pg<TOTAL_PAGES;++pg){
+    int shared = get_frame(PT, pg);
+
+    for(int i=0; i<SH_PAGES; ++i){                                              
+      if((pShared_mem)[i].frameId == shared){                               // Look for shared pages
+        if((pShared_mem)[i].refs == 0 && (pShared_mem)[i].marked) {         // If is a marked page, set 0
+          memset((void*)(pg<<12), 0, PAGE_SIZE);
+        }        
+                                                                            
+        (pShared_mem)[i].refs -= 1;                                         // Decrement references
+        del_ss_pag(PT, pg);                                                 // Unlink page from PT
+      }
+    }
+  }
+  set_cr3(get_DIR(current()));
+}
+
 void sys_exit()
 {  
   int i;
@@ -200,6 +252,10 @@ void sys_exit()
     del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
   }
   
+  /* --- MILESTONE 4-5 --- */
+  dettach_shared_mem();
+  /* --------------------- */
+
   /* Free task_struct */
   list_add_tail(&(current()->list), &freequeue);
   
@@ -235,4 +291,127 @@ int sys_get_stats(int pid, struct stats *st)
     }
   }
   return -ESRCH; /*ESRCH */
+}
+
+/* GAME STUFF */
+int sys_read(char* b, int maxchars){
+
+  if(b == NULL) return -EINVAL;
+  if(maxchars < 0) return -EINVAL;
+  if(!access_ok(VERIFY_READ, b, maxchars)) return -EINVAL;
+  
+  int i = 0;
+  int bStatus = 0;
+  char c;
+
+  while((i < maxchars) && (bStatus != -1)){
+    bStatus = pop_circ_buffer(pBuffer, &c);
+    if(bStatus != -1) {
+      copy_to_user(&c, &b[i], sizeof(c));
+      ++i;
+    }
+  }
+  
+  return i;
+}
+
+/* MILESTONE 3 */
+int sys_gotoxy(int dest_x, int dest_y){
+  if (dest_x < 0 || dest_x >= NUM_COLUMNS) return -EINVAL;
+  if (dest_y < 0 || dest_y >= NUM_ROWS)    return -EINVAL;
+
+  x = dest_x;
+  y = dest_y;
+
+  return 0;
+}
+
+int sys_set_color(int fg, int bg){
+
+  if (fg < 0 || fg > 15) return -EINVAL;
+  if (bg < 0 || bg >  7) return -EINVAL;
+
+  color = 0 | bg << 4 | fg;
+
+  return 0;
+}
+
+/* 
+------------------- MILESTONE 4-5 --------------------- 
+|  Changes to perform:                                |
+|    - fork: inherit shared memory.                   |
+|    - exit: delete shared memory links.              |
+|    - acces_ok: check new shared memory regions.     |
+-------------------------------------------------------
+*/
+
+/* Find a free LOGICAL page */
+unsigned int find_free_page(){
+  page_table_entry *PT = get_PT(current());
+  int pag = NUM_PAG_CODE+NUM_PAG_DATA+NUM_PAG_KERNEL;
+  int found = 0;
+  while(pag<TOTAL_PAGES && !found){
+    if(!PT[pag].bits.present){
+      found = 1;
+
+    } else ++pag;   
+  } 
+
+  if(!found) return -ENOMEM;
+  return pag;
+}
+
+void *sys_shmat(int id, void* addr){
+
+  if(!((int)(addr) & 0xfffff000)) return -EINVAL;
+  if(id<0 || id>9) return -EINVAL;
+
+  unsigned long pag = (unsigned long)addr>>12;
+  if(pag > TOTAL_PAGES) return -EINVAL;
+
+  page_table_entry *PT = get_PT(current());
+  int free_addr = addr;
+  
+  /* If addr is null or it's not free, we must find a free addr */
+  if((addr == NULL) || get_frame(PT, pag)!=0){
+    unsigned int free_page = find_free_page();
+    if(free_page == -ENOMEM) return -ENOMEM;
+    free_addr = free_page<<12;
+
+  } // If it's free, all correct!
+  
+  (pShared_mem)[id].refs += 1;
+  set_ss_pag(PT, (void*)(free_addr), (pShared_mem)[id].frameId);
+  return (void *)free_addr;
+}
+
+int sys_shmdt(void *addr){
+  if(!((int)(addr) & 0xfffff000)) return -EINVAL;
+  page_table_entry *PT = get_PT(current());
+
+  unsigned logical_page = (unsigned long)addr>>12;
+  int shared = get_frame(PT, logical_page);
+  if(shared==0) return -EINVAL;
+
+  int id = 0;
+  while((id<SH_PAGES)&&((pShared_mem)[id].frameId != shared)){        // Find index in Shared_mem vector
+    ++id;
+  }
+  
+  if((pShared_mem)[id].refs == 0 && (pShared_mem)[id].marked) {       // If is a marked page, set 0
+    memset((void*)logical_page, 0, PAGE_SIZE);
+    (pShared_mem)[id].marked = 0;
+  }                                                                            
+  (pShared_mem)[id].refs -= 1;                                        // Decrement references
+  free_frame(get_frame(PT, logical_page));                            // Deallocate frame
+  del_ss_pag(PT, logical_page);                                       // Unlink page from PT
+  set_cr3(get_DIR(current()));
+
+  return 0;
+}
+
+int sys_shmrm(int id){
+  if(id<0 || id>9) return -EINVAL;
+  (pShared_mem)[id].marked = 1;
+  return 0;
 }

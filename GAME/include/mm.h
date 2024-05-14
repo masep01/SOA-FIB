@@ -12,6 +12,14 @@
  
 #define FREE_FRAME 0
 #define USED_FRAME 1
+
+#define SH_PAGES 10
+typedef struct shared_page{
+    int frameId;
+    int refs;
+    int marked;
+};
+
 /* Bytemap to mark the free physical pages */
 extern Byte phys_mem[TOTAL_PAGES];
 
