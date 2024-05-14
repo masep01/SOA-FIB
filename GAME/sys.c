@@ -232,7 +232,6 @@ void dettach_shared_mem(){
         }        
                                                                             
         (pShared_mem)[i].refs -= 1;                                         // Decrement references
-        free_frame(get_frame(PT,pg));                                       // Deallocate frame
         del_ss_pag(PT, pg);                                                 // Unlink page from PT
       }
     }
