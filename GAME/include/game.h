@@ -15,7 +15,7 @@
 #define INITIAL_PLAYER_X 40
 #define INITIAL_PLAYER_Y 15
 
-void calc_fps();
+void update_fps();
 void clean_screen();
 void print_map();
 void init_game();
