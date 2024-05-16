@@ -37,7 +37,6 @@ int frames = 0;
 int tics_prev = 0;
 
 void update_fps(){
-  int current_tics = gettime();
   fps = frames;
 }
 
@@ -86,15 +85,15 @@ void init_game(){
   while(1){
     int current_tics = gettime();
     if(current_tics-tics_prev >= TICS_SEC){
-        tics_prev = current_tics;
-        update_fps();
-        print_fps();
-        frames = 0;
+      tics_prev = current_tics;
+      update_fps();
+      print_fps();
+      frames = 0;
 
     } else {
-        print_map();
-        set_and_print_player(player_x, player_y);
-        ++frames;
+      print_map();
+      set_and_print_player(player_x, player_y);
+      ++frames;
     }
   }
 }

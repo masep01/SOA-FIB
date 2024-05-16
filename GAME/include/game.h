@@ -1,7 +1,7 @@
 #ifndef _LINUX_GAME_H
 #define _LINUX_GAME_H
 
-#define TICS_SEC 500
+#define TICS_SEC 18
 
 #define SCREEN_ROWS 25
 #define SCREEN_COLS 80
