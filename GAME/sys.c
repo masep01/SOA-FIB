@@ -105,30 +105,31 @@ int sys_fork(void)
   allocate_DIR((struct task_struct*)uchild);
   
   /* Allocate pages for DATA+STACK */
-  int new_ph_pag, pag, i;
   page_table_entry *process_PT = get_PT(&uchild->task);
-  for (pag=0; pag<NUM_PAG_DATA; pag++)
-  {
-    new_ph_pag=alloc_frame();
-    if (new_ph_pag!=-1) /* One page allocated */
-    {
-      set_ss_pag(process_PT, PAG_LOG_INIT_DATA+pag, new_ph_pag);
-    }
-    else /* No more free pages left. Deallocate everything */
-    {
-      /* Deallocate allocated pages. Up to pag. */
-      for (i=0; i<pag; i++)
-      {
-        free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
-        del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
-      }
-      /* Deallocate task_struct */
-      list_add_tail(lhcurrent, &freequeue);
-      
-      /* Return error */
-      return -EAGAIN; 
-    }
-  }
+  int pag;
+ // int new_ph_pag, pag, i;
+ // for (pag=0; pag<NUM_PAG_DATA; pag++)
+ // {
+ //   new_ph_pag=alloc_frame();
+ //   if (new_ph_pag!=-1) /* One page allocated */
+ //   {
+ //     set_ss_pag(process_PT, PAG_LOG_INIT_DATA+pag, new_ph_pag);
+ //   }
+ //   else /* No more free pages left. Deallocate everything */
+ //   {
+ //     /* Deallocate allocated pages. Up to pag. */
+ //     for (i=0; i<pag; i++)
+ //     {
+ //       free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
+ //       del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
+ //     }
+ //     /* Deallocate task_struct */
+ //     list_add_tail(lhcurrent, &freequeue);
+ //     
+ //     /* Return error */
+ //     return -EAGAIN; 
+ //   }
+ // } 
 
   /* Copy parent's SYSTEM and CODE to child. */
   page_table_entry *parent_PT = get_PT(current());
@@ -143,10 +144,18 @@ int sys_fork(void)
   /* Copy parent's DATA to child. We will use TOTAL_PAGES-1 as a temp logical page to map to */
   for (pag=NUM_PAG_KERNEL+NUM_PAG_CODE; pag<NUM_PAG_KERNEL+NUM_PAG_CODE+NUM_PAG_DATA; pag++)
   {
+    
     /* Map one child page to parent's address space. */
-    set_ss_pag(parent_PT, pag+NUM_PAG_DATA, get_frame(process_PT, pag));
-    copy_data((void*)(pag<<12), (void*)((pag+NUM_PAG_DATA)<<12), PAGE_SIZE);
-    del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
+    //set_ss_pag(parent_PT, pag+NUM_PAG_DATA, get_frame(process_PT, pag));
+    //copy_data((void*)(pag<<12), (void*)((pag+NUM_PAG_DATA)<<12), PAGE_SIZE);
+    //del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
+    
+    int frame = get_frame(parent_PT, pag);
+
+    set_ss_pag(process_PT, pag, frame);
+    phys_mem[frame] += 1;
+    process_PT[pag].bits.rw = 0;
+    parent_PT[pag].bits.rw = 0;
   }
 
   /* -------MILESTONE 4-5 ------ */

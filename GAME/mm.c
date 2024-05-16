@@ -8,7 +8,7 @@
 #include <hardware.h>
 #include <sched.h>
 
-Byte phys_mem[TOTAL_PAGES];
+int phys_mem[TOTAL_PAGES];
 
 struct shared_page shared_mem[SH_PAGES];
 struct shared_page *pShared_mem = &(shared_mem);
@@ -124,7 +124,19 @@ void set_cr3(page_table_entry * dir)
 })
 #define write_cr0(x) \
          __asm__("movl %0,%%cr0": :"r" (x));
-         
+
+#define def_read_cr2() ({ \
+         unsigned int __dummy; \
+         __asm__( \
+                 "movl %%cr2,%0\n\t" \
+                 :"=r" (__dummy)); \
+         __dummy; \
+})
+
+unsigned int read_cr2(){
+  return def_read_cr2();
+}
+
 /* Enable paging, modifying the CR0 register */
 void set_pe_flag()
 {
@@ -253,7 +265,9 @@ void free_user_pages( struct task_struct *task )
 void free_frame( unsigned int frame )
 {
     if ((frame>NUM_PAG_KERNEL)&&(frame<TOTAL_PAGES))
-      phys_mem[frame]=FREE_FRAME;
+      //phys_mem[frame]=FREE_FRAME;
+      /* COW */
+      phys_mem[frame] -= 1;
 }
 
 /* set_ss_pag - Associates logical page 'page' with physical page 'frame' */
@@ -265,16 +279,23 @@ void set_ss_pag(page_table_entry *PT, unsigned page,unsigned frame)
 	PT[page].bits.rw=1;
 	PT[page].bits.present=1;
 
+  /* COW */
+  phys_mem[frame] += 1;
+
 }
 
 /* del_ss_pag - Removes mapping from logical page 'logical_page' */
 void del_ss_pag(page_table_entry *PT, unsigned logical_page)
 {
   PT[logical_page].entry=0;
+
+  /* COW */
+  int frame = get_frame(PT, logical_page);
+  phys_mem[frame]++;
 }
 
 /* get_frame - Returns the physical frame associated to page 'logical_page' */
 unsigned int get_frame (page_table_entry *PT, unsigned int logical_page){
-     return PT[logical_page].bits.pbase_addr; 
+      return PT[logical_page].bits.pbase_addr; 
 }
 

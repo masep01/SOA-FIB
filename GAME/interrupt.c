@@ -6,8 +6,9 @@
 #include <segment.h>
 #include <hardware.h>
 #include <io.h>
-
+#include <errno.h>
 #include <sched.h>
+#include <mm.h>
 
 #include <zeos_interrupt.h>
 
@@ -37,6 +38,7 @@ int zeos_ticks = 0;
 
 struct circ_buffer KEYBOARD_BUFFER;
 struct circ_buffer *pBuffer = &(KEYBOARD_BUFFER);
+extern int phys_mem[TOTAL_PAGES];
 
 void clock_routine()
 {
@@ -55,6 +57,14 @@ void keyboard_routine()
   }
 
 }
+
+void print_hexa(unsigned long num){
+  char* digits = "0123456789ABCDEF";
+  for (int i = 28; i >= 0; i-=4)
+  {
+    printc(digits[(num>>i)&0xF]);
+  }
+}  
 
 void setInterruptHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 {
@@ -103,6 +113,34 @@ void setTrapHandler(int vector, void (*handler)(), int maxAccessibleFromPL)
 void clock_handler();
 void keyboard_handler();
 void system_call_handler();
+void my_page_fault_handler();
+
+void my_page_fault_routine(unsigned long param, unsigned long eip){
+  char* msg = "\nProcess generates a PAGE FAULT exception at EIP: ";
+
+  /* Print message */
+  printk(msg);
+  printk("0x");
+  print_hexa(eip);
+
+  /* COW */
+  page_table_entry *PT = get_PT(current());
+  int cr2 = read_cr2();
+  int page = (int)(cr2&0xfffff000);
+  int frame = get_frame(PT, page);
+  if(phys_mem[frame] > 1){
+    
+    int new_frame = alloc_frame();
+    int free_page = find_free_page();
+    if(free_page == -ENOMEM){
+
+    }
+    set_ss_pag(PT, free_page, new_frame);
+    copy_data((void*)(page<<12), (void*)(free_page<<12), PAGE_SIZE);
+    phys_mem[frame] -= 1;
+  }
+
+}
 
 void setMSR(unsigned long msr_number, unsigned long high, unsigned long low);
 
@@ -124,6 +162,7 @@ void setIdt()
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
   setInterruptHandler(32, clock_handler, 0);
   setInterruptHandler(33, keyboard_handler, 0);
+  setInterruptHandler(14, my_page_fault_handler, 0);
 
   setSysenter();
 

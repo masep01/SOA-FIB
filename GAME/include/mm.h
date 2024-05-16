@@ -21,7 +21,7 @@ typedef struct shared_page{
 };
 
 /* Bytemap to mark the free physical pages */
-extern Byte phys_mem[TOTAL_PAGES];
+extern int phys_mem[TOTAL_PAGES];
 
 
 extern page_table_entry dir_pages[NR_TASKS][TOTAL_PAGES];

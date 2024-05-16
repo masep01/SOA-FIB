@@ -117,3 +117,10 @@ sysenter_fin:
 	movl 12(%esp), %ecx	      // User stack address
 	sti
 	sysexit
+
+ENTRY (my_page_fault_handler)
+      SAVE_ALL
+      EOI
+      call my_page_fault_routine
+      RESTORE_ALL
+      iret
