@@ -8,7 +8,7 @@
 #include <hardware.h>
 #include <sched.h>
 
-int phys_mem[TOTAL_PAGES];
+Byte phys_mem[TOTAL_PAGES];
 
 struct shared_page shared_mem[SH_PAGES];
 struct shared_page *pShared_mem = &(shared_mem);
@@ -125,7 +125,7 @@ void set_cr3(page_table_entry * dir)
 #define write_cr0(x) \
          __asm__("movl %0,%%cr0": :"r" (x));
 
-#define def_read_cr2() ({ \
+#define read_cr2() ({ \
          unsigned int __dummy; \
          __asm__( \
                  "movl %%cr2,%0\n\t" \
@@ -133,8 +133,9 @@ void set_cr3(page_table_entry * dir)
          __dummy; \
 })
 
-unsigned int read_cr2(){
-  return def_read_cr2();
+unsigned int get_cr2(){
+  unsigned int cr2 = read_cr2();
+  return cr2;
 }
 
 /* Enable paging, modifying the CR0 register */

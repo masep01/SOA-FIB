@@ -38,7 +38,7 @@ int zeos_ticks = 0;
 
 struct circ_buffer KEYBOARD_BUFFER;
 struct circ_buffer *pBuffer = &(KEYBOARD_BUFFER);
-extern int phys_mem[TOTAL_PAGES];
+extern Byte phys_mem[TOTAL_PAGES];
 
 void clock_routine()
 {
@@ -116,30 +116,53 @@ void system_call_handler();
 void my_page_fault_handler();
 
 void my_page_fault_routine(unsigned long param, unsigned long eip){
-  char* msg = "\nProcess generates a PAGE FAULT exception at EIP: ";
+  unsigned int cr2 = get_cr2();
+  int page = (int)(cr2&0xfffff000);
 
-  /* Print message */
-  printk(msg);
-  printk("0x");
-  print_hexa(eip);
-
+  /* The page must be a data page, print addr and while(1) otherwise. */
+  int ini_data_pages = PAG_LOG_INIT_DATA;
+  int end_data_pages = PAG_LOG_INIT_DATA+NUM_PAG_DATA;
+  if(page < ini_data_pages || page >= end_data_pages){
+    char* msg = "\nProcess generates a PAGE FAULT exception at EIP: ";
+    /* Print message */
+    printk(msg);
+    printk("0x");
+    print_hexa(eip);
+    while(1){}
+  }
+  
   /* COW */
   page_table_entry *PT = get_PT(current());
-  int cr2 = read_cr2();
-  int page = (int)(cr2&0xfffff000);
   int frame = get_frame(PT, page);
+
   if(phys_mem[frame] > 1){
-    
     int new_frame = alloc_frame();
     int free_page = find_free_page();
-    if(free_page == -ENOMEM){
+    
+    if(free_page == -ENOMEM){                                           /* No free PT entries: find one */
+      int temp_page = TOTAL_PAGES-1;                                    // Search temporal page
+      if(temp_page==page) temp_page -= 1;                               // Ensure is not the same page as the original one.
+      int old_frame = get_frame(PT, temp_page);                         // Save its frame
 
+      set_ss_pag(PT, temp_page, new_frame);                             // Map temporal page <---> new_fame
+      copy_data((void*)(page<<12), (void*)(temp_page<<12), PAGE_SIZE);  // Copy data
+      
+      set_ss_pag(PT, temp_page, old_frame);                             // Recover mapping of temporal page
+      set_ss_pag(PT, page, new_frame);                                  // Do mapping of new_frame <---> page
+
+    } else {                                                            /* Free entries */
+      set_ss_pag(PT, free_page, new_frame);                             // Map new_frame <---> free_entry
+      copy_data((void*)(page<<12), (void*)(free_page<<12), PAGE_SIZE);  // Copy data
+  
+      del_ss_pag(PT, free_page);                                        // Delete mapping of temporal page
+      set_ss_pag(PT, page, new_frame);                                  // Do mapping of new_frame <---> page
     }
-    set_ss_pag(PT, free_page, new_frame);
-    copy_data((void*)(page<<12), (void*)(free_page<<12), PAGE_SIZE);
-    phys_mem[frame] -= 1;
-  }
 
+    phys_mem[frame] -= 1;
+
+  } else if(phys_mem[frame]==1) PT[page].bits.rw = 1;
+  
+  set_cr3(get_DIR(current()));
 }
 
 void setMSR(unsigned long msr_number, unsigned long high, unsigned long low);

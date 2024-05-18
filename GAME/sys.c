@@ -106,31 +106,8 @@ int sys_fork(void)
   
   /* Allocate pages for DATA+STACK */
   page_table_entry *process_PT = get_PT(&uchild->task);
-  int pag;
- // int new_ph_pag, pag, i;
- // for (pag=0; pag<NUM_PAG_DATA; pag++)
- // {
- //   new_ph_pag=alloc_frame();
- //   if (new_ph_pag!=-1) /* One page allocated */
- //   {
- //     set_ss_pag(process_PT, PAG_LOG_INIT_DATA+pag, new_ph_pag);
- //   }
- //   else /* No more free pages left. Deallocate everything */
- //   {
- //     /* Deallocate allocated pages. Up to pag. */
- //     for (i=0; i<pag; i++)
- //     {
- //       free_frame(get_frame(process_PT, PAG_LOG_INIT_DATA+i));
- //       del_ss_pag(process_PT, PAG_LOG_INIT_DATA+i);
- //     }
- //     /* Deallocate task_struct */
- //     list_add_tail(lhcurrent, &freequeue);
- //     
- //     /* Return error */
- //     return -EAGAIN; 
- //   }
- // } 
-
+  int pag,i;
+ 
   /* Copy parent's SYSTEM and CODE to child. */
   page_table_entry *parent_PT = get_PT(current());
   for (pag=0; pag<NUM_PAG_KERNEL; pag++)
@@ -141,15 +118,11 @@ int sys_fork(void)
   {
     set_ss_pag(process_PT, PAG_LOG_INIT_CODE+pag, get_frame(parent_PT, PAG_LOG_INIT_CODE+pag));
   }
+  
   /* Copy parent's DATA to child. We will use TOTAL_PAGES-1 as a temp logical page to map to */
-  for (pag=NUM_PAG_KERNEL+NUM_PAG_CODE; pag<NUM_PAG_KERNEL+NUM_PAG_CODE+NUM_PAG_DATA; pag++)
+  for (i=0; i<NUM_PAG_DATA; i++)
   {
-    
-    /* Map one child page to parent's address space. */
-    //set_ss_pag(parent_PT, pag+NUM_PAG_DATA, get_frame(process_PT, pag));
-    //copy_data((void*)(pag<<12), (void*)((pag+NUM_PAG_DATA)<<12), PAGE_SIZE);
-    //del_ss_pag(parent_PT, pag+NUM_PAG_DATA);
-    
+    int pag = PAG_LOG_INIT_DATA + i;
     int frame = get_frame(parent_PT, pag);
 
     set_ss_pag(process_PT, pag, frame);

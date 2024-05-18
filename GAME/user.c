@@ -11,6 +11,7 @@ int __attribute__ ((__section__(".text.main"))) main(void){
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
 
   //test_pfault();
+  write(1, "Hola", sizeof("Hola"));
   fork();
   //init_game();
   write(1, "Hola", sizeof("Hola"));
