@@ -117,12 +117,11 @@ void my_page_fault_handler();
 
 void my_page_fault_routine(unsigned long param, unsigned long eip){
   unsigned int cr2 = get_cr2();
-  int page = (int)(cr2&0xfffff000);
+  int page = (int)(cr2>>12);
+  page_table_entry *PT = get_PT(current());
+  int frame = get_frame(PT, page);
 
-  /* The page must be a data page, print addr and while(1) otherwise. */
-  int ini_data_pages = PAG_LOG_INIT_DATA;
-  int end_data_pages = PAG_LOG_INIT_DATA+NUM_PAG_DATA;
-  if(page < ini_data_pages || page >= end_data_pages){
+  if(phys_mem[frame] < 1){
     char* msg = "\nProcess generates a PAGE FAULT exception at EIP: ";
     /* Print message */
     printk(msg);
@@ -131,10 +130,6 @@ void my_page_fault_routine(unsigned long param, unsigned long eip){
     while(1){}
   }
   
-  /* COW */
-  page_table_entry *PT = get_PT(current());
-  int frame = get_frame(PT, page);
-
   if(phys_mem[frame] > 1){
     int new_frame = alloc_frame();
     int free_page = find_free_page();

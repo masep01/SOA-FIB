@@ -113,7 +113,7 @@ sysenter_err:
 sysenter_fin:
 	movl %eax, 0x18(%esp)
 	RESTORE_ALL
-	movl (%esp), %edx // Return address
+	movl (%esp), %edx             // Return address
 	movl 12(%esp), %ecx	      // User stack address
 	sti
 	sysexit
@@ -123,4 +123,14 @@ ENTRY (my_page_fault_handler)
       EOI
       call my_page_fault_routine
       RESTORE_ALL
+      addl $4, %esp
       iret
+
+/*        PILA         */
+/*     __________      */
+/*    |          |     */
+/*    |   ebp    |     */
+/*    |   ret    |     */
+/*    | SAVE_ALL |     */
+/*    |   ...    |     */
+/*    |__________|     */
