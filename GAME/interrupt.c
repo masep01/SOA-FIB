@@ -121,7 +121,8 @@ void my_page_fault_routine(unsigned long param, unsigned long eip){
   page_table_entry *PT = get_PT(current());
   int frame = get_frame(PT, page);
 
-  if(phys_mem[frame] < 1){
+
+  if(page < PAG_LOG_INIT_DATA || page >= PAG_LOG_INIT_DATA+NUM_PAG_DATA){
     char* msg = "\nProcess generates a PAGE FAULT exception at EIP: ";
     /* Print message */
     printk(msg);
@@ -137,16 +138,20 @@ void my_page_fault_routine(unsigned long param, unsigned long eip){
     if(free_page == -ENOMEM){                                           /* No free PT entries: find one */
       int temp_page = TOTAL_PAGES-1;                                    // Search temporal page
       if(temp_page==page) temp_page -= 1;                               // Ensure is not the same page as the original one.
-      int old_frame = get_frame(PT, temp_page);                         // Save its frame
+      unsigned int old_entry = PT[temp_page].entry;                     // Save bits
 
-      set_ss_pag(PT, temp_page, new_frame);                             // Map temporal page <---> new_fame
+      set_ss_pag(PT, temp_page, new_frame);                             // Map temp_page to new_frame
+      PT[page].bits.rw=1;                                               // Set rw bit
+      set_cr3(get_DIR(current()));                                      // Flush TLB
       copy_data((void*)(page<<12), (void*)(temp_page<<12), PAGE_SIZE);  // Copy data
       
-      set_ss_pag(PT, temp_page, old_frame);                             // Recover mapping of temporal page
+      PT[temp_page].entry = old_entry;                                  // Restore bits
       set_ss_pag(PT, page, new_frame);                                  // Do mapping of new_frame <---> page
 
     } else {                                                            /* Free entries */
       set_ss_pag(PT, free_page, new_frame);                             // Map new_frame <---> free_entry
+      PT[page].bits.rw=1;                                               // Set rw bit
+      set_cr3(get_DIR(current()));                                      // Flush TLB
       copy_data((void*)(page<<12), (void*)(free_page<<12), PAGE_SIZE);  // Copy data
   
       del_ss_pag(PT, free_page);                                        // Delete mapping of temporal page
